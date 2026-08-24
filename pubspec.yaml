@@ -11,11 +11,16 @@ dependencies:
     sdk: flutter
   crypto: ^3.0.3
   dio: ^5.7.0
+  flutter_foreground_task: ^11.0.1
+  home_widget: ^0.6.0
+  image_picker: ^1.1.2
   local_auth: ^2.3.0
   path_provider: ^2.1.5
   shared_preferences: ^2.5.0
   speech_to_text: ^7.0.0
+  supabase_flutter: ^2.8.0
   uuid: ^4.5.1
+  url_launcher: ^6.3.1
   web_socket_channel: ^3.0.3
 
 dev_dependencies:

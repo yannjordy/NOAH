@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../providers/providers.dart';
 
@@ -154,6 +156,34 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     setState(() => _swipeCancelProgress = 0.0);
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galerie'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Caméra'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
+    if (picked != null) {
+      setState(() => _pendingImage = picked.path);
+    }
+  }
+
   void _send() {
     final text = _ctrl.text.trim();
     if (text.isEmpty && _pendingImage == null) return;
@@ -230,7 +260,7 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: Image.network(_pendingImage!, width: 32, height: 32, fit: BoxFit.cover),
+                        child: Image.file(File(_pendingImage!), width: 32, height: 32, fit: BoxFit.cover),
                       ),
                       const SizedBox(width: 6),
                       Text('Image prête', style: TextStyle(fontSize: 11, color: t2)),
@@ -293,6 +323,14 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 6),
+                  _FrostedButton(
+                    size: 38,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: _pickImage,
+                    child: Icon(Icons.image_outlined, size: 18, color: accent),
                   ),
                   const SizedBox(width: 6),
                   _FrostedButton(

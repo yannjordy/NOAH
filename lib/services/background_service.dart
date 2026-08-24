@@ -1,88 +1,76 @@
 import 'dart:async';
-import 'dart:developer' as dev;
-import 'dart:isolate';
 import 'dart:io';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+
+class ForegroundTaskHandler extends TaskHandler {
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {}
+
+  @override
+  void onRepeatEvent(DateTime timestamp) {}
+
+  @override
+  Future<void> onDestroy(DateTime timestamp, bool timeout) async {}
+
+  @override
+  void onReceiveData(Object data) {}
+}
 
 class BackgroundService {
-  static final Map<String, Timer> _tasks = {};
-  static final Map<String, Duration> _intervals = {};
   static bool _running = false;
-  static Isolate? _isolate;
-  static ReceivePort? _receivePort;
-
   static bool get isRunning => _running;
 
-  static void start() {
-    if (_running) return;
-    if (!Platform.isAndroid && !Platform.isIOS) return;
-    _running = true;
-    _receivePort = ReceivePort();
-
-    _receivePort!.listen((message) {
-      if (message is String) {
-        dev.log('BackgroundService: $message');
-      }
-    });
-
-    _spawnIsolate();
-    dev.log('BackgroundService: started');
+  static Future<void> init() async {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'noah_trading',
+        channelName: 'NOAH Trading Service',
+        channelDescription: 'Exécute le trading automatique en arrière-plan',
+        channelImportance: NotificationChannelImportance.HIGH,
+        priority: NotificationPriority.HIGH,
+        iconData: const NotificationIconData(
+          resType: ResourceType.mipmap,
+          resPrefix: ResourcePrefix.ic,
+          name: 'launcher',
+        ),
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        interval: 30000,
+        isOnceEvent: false,
+        autoRunOnBoot: true,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+      printDevLog: false,
+    );
   }
 
-  static void _spawnIsolate() async {
-    _isolate = await Isolate.spawn(_isolateEntry, _receivePort?.sendPort);
-  }
+  static Future<bool> start() async {
+    if (_running) return true;
+    if (!Platform.isAndroid && !Platform.isIOS) return false;
 
-  static void _isolateEntry(SendPort? sendPort) {
-    Timer.periodic(const Duration(seconds: 5), (_) {
-      sendPort?.send('isolate heartbeat ${DateTime.now()}');
-    });
-  }
+    final serviceRequest = await FlutterForegroundTask.startService(
+      notificationTitle: 'NOAH Trading Actif',
+      notificationText: 'Le trading automatique est en cours...',
+      task: ForegroundTask(
+        taskHandler: ForegroundTaskHandler(),
+      ),
+    );
 
-  static void registerTask(String name, Duration interval, Function callback) {
-    if (_tasks.containsKey(name)) {
-      _tasks[name]!.cancel();
-    }
-    _intervals[name] = interval;
-    _tasks[name] = Timer.periodic(interval, (_) {
-      try {
-        callback();
-      } catch (e, stackTrace) {
-        dev.log(
-          'BackgroundService: error in task "$name"',
-          error: e,
-          stackTrace: stackTrace,
-        );
-      }
-    });
-    dev.log('BackgroundService: registered task "$name" every ${interval.inSeconds}s');
+    _running = serviceRequest is ServiceRequestResult;
+    return _running;
   }
-
-  static void unregisterTask(String name) {
-    _tasks[name]?.cancel();
-    _tasks.remove(name);
-    _intervals.remove(name);
-    dev.log('BackgroundService: unregistered task "$name"');
-  }
-
-  static List<String> get registeredTasks => _tasks.keys.toList();
 
   static Future<void> stop() async {
-    if (!_running) return;
+    await FlutterForegroundTask.stopService();
     _running = false;
+  }
 
-    for (final entry in _tasks.entries) {
-      entry.value.cancel();
-      dev.log('BackgroundService: cancelled task "${entry.key}"');
-    }
-    _tasks.clear();
-    _intervals.clear();
+  static Future<bool> get isServiceRunning async {
+    return await FlutterForegroundTask.isRunningService;
+  }
 
-    _isolate?.kill(priority: Isolate.immediate);
-    _isolate = null;
-
-    _receivePort?.close();
-    _receivePort = null;
-
-    dev.log('BackgroundService: stopped');
+  static void sendData(Object data) {
+    FlutterForegroundTask.sendDataToTask(data);
   }
 }
