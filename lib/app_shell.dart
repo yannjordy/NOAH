@@ -841,7 +841,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       case 3:
         return ConnectionsScreen(auth: _auth, chat: _chat, openLogin: _openLogin);
       case 4:
-        return PortfolioScreen(portfolio: _portfolio, isDemo: _storage.getDemoMode());
+        return PortfolioScreen(portfolio: _portfolio, isDemo: widget.storage.getDemoMode());
       case 5:
         return RiskScreen(risk: _risk, portfolio: _portfolio);
       case 6:

@@ -287,7 +287,6 @@ class BinanceService {
       }
       rethrow;
     }
-    }
   }
 
   Future<List<BinanceOpenOrder>> getOpenOrders({String? symbol}) async {

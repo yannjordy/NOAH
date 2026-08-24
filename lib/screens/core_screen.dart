@@ -889,8 +889,6 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
         ),
       ),
     );
-      ),
-    );
   }
 
   // ═══════════════════════════════════════════════════════
