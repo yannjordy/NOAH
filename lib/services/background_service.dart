@@ -165,7 +165,7 @@ class _BackgroundTaskHandler extends TaskHandler {
   }
 
   @override
-  Future<void> onDestroy(DateTime timestamp) async {}
+  Future<void> onDestroy(DateTime timestamp, bool reschedule) async {}
 
   @override
   void onNotificationButtonPressed(String id) {}

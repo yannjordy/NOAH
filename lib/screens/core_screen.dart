@@ -296,27 +296,25 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isUp
-                    ? [isDark ? Color.fromRGBO(26, 58, 42, 0.85) : Color.fromRGBO(232, 245, 233, 0.85), isDark ? Color.fromRGBO(30, 30, 30, 0.85) : Color.fromRGBO(255, 255, 255, 0.85)]
-                    : [isDark ? Color.fromRGBO(58, 26, 26, 0.85) : Color.fromRGBO(255, 238, 238, 0.85), isDark ? Color.fromRGBO(30, 30, 30, 0.85) : Color.fromRGBO(255, 255, 255, 0.85)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: isDark
+                  ? Color.fromRGBO(255, 255, 255, 0.06)
+                  : Color.fromRGBO(0, 0, 0, 0.04),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: (isUp ? green : red).withValues(alpha: 0.2),
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
                 width: 0.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isUp ? green : red).withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
             ),
-        child: Column(
+            child: Column(
           children: [
             Row(
               children: [
@@ -374,7 +372,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -571,57 +571,37 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Color.fromRGBO(255, 255, 255, 0.06)
-                  : Color.fromRGBO(0, 0, 0, 0.04),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
-                width: 0.5,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: border),
               ),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                  Colors.transparent,
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C))),
+                  const SizedBox(height: 1),
+                  Text(desc, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C))),
                 ],
-                stops: const [0.0, 0.3],
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: border, width: 0.5),
-                  ),
-                  child: Icon(icon, size: 16, color: color),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C))),
-                      const SizedBox(height: 1),
-                      Text(desc, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C))),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, size: 16, color: color.withValues(alpha: 0.5)),
-              ],
-            ),
-          ),
+            Icon(Icons.chevron_right_rounded, size: 16, color: color.withValues(alpha: 0.5)),
+          ],
         ),
       ),
     );
@@ -734,7 +714,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   stops: const [0.0, 0.3],
                 ),
               ),
-          child: Column(
+              child: Column(
             children: [
               Expanded(
                 child: AnimatedBuilder(
@@ -767,6 +747,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   ),
                 ),
             ],
+              ),
+            ),
           ),
         ),
       ],
@@ -774,7 +756,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   }
 
   List<double> _generateChartPoints(PortfolioData? p) {
-    if (p == null) return List.filled(20, 10000.0);
+    if (p == null) return _demoCurve(10000, 0);
     final pts = <double>[];
     var bal = 10000.0;
     pts.add(bal);
@@ -788,13 +770,20 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
       else if (t.side == 'buy') bal -= t.qty * t.price;
       pts.add(bal);
     }
-    if (pts.length <= 2) {
-      // Only 1-2 points: interpolate to fill 20 points
-      if (pts.length == 1) return List.filled(20, pts.first);
-      final start = pts.first;
-      final end = pts.last;
-      return List.generate(20, (i) => start + (end - start) * i / 19);
+    if (pts.length <= 2) return _demoCurve(bal, pts.last - pts.first);
+    return pts;
+  }
+
+  List<double> _demoCurve(double base, double delta) {
+    final pts = <double>[];
+    final r = Random();
+    var v = base - 500;
+    for (int i = 0; i < 30; i++) {
+      v += r.nextDouble() * 80 - 30 + delta / 30;
+      v = v.clamp(base - 1500, base + 1500);
+      pts.add(v);
     }
+    pts.add(base + delta);
     return pts;
   }
 
@@ -839,54 +828,34 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
 
   Widget _metricCard(String label, String value, Color valColor, Color valBg,
       Color t2, Color t0, Color bg1, Color border, bool isDark) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Color.fromRGBO(255, 255, 255, 0.06)
-                : Color.fromRGBO(0, 0, 0, 0.04),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
-              width: 0.5,
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.3],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg1,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  if (valBg != const Color(0x00000000))
-                    Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                        color: valBg,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: valColor.withValues(alpha: 0.3)),
-                      ),
-                    ),
-                  if (valBg != const Color(0x00000000)) const SizedBox(width: 6),
-                  Text(label, style: TextStyle(fontSize: 8, color: t2, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 18, fontWeight: FontWeight.w800, color: valColor, height: 1)),
+              if (valBg != const Color(0x00000000))
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(
+                    color: valBg,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: valColor.withValues(alpha: 0.3)),
+                  ),
+                ),
+              if (valBg != const Color(0x00000000)) const SizedBox(width: 6),
+              Text(label, style: TextStyle(fontSize: 8, color: t2, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 18, fontWeight: FontWeight.w800, color: valColor, height: 1)),
+        ],
       ),
     );
   }
@@ -972,26 +941,24 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
             decoration: BoxDecoration(
               color: isDark
-                  ? Color.fromRGBO(30, 30, 30, 0.90)
-                  : Color.fromRGBO(255, 255, 255, 0.90),
+                  ? Color.fromRGBO(255, 255, 255, 0.06)
+                  : Color.fromRGBO(0, 0, 0, 0.04),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-              border: Border(
-                top: BorderSide(
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-                  width: 0.5,
-                ),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                width: 0.5,
               ),
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.3],
               ),
             ),
-        child: SafeArea(
+            child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
             child: Column(
@@ -1022,6 +989,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ],
+                ),
+              ),
             ),
           ),
         ),
@@ -1032,6 +1001,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   Widget _teamMemberTile(String name, bool isDark) {
     final isFemale = _agentGenders[name] == 'female';
     final genderColor = isFemale ? (isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57)) : const Color(0xFF4A90D9);
+    final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
+    final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
     final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
@@ -1053,8 +1024,17 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
                 width: 0.5,
               ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
             ),
-        child: Row(
+            child: Row(
           children: [
             Container(
               width: 36, height: 36,
@@ -1081,7 +1061,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1127,14 +1109,14 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                        ),
+              borderRadius: BorderRadius.circular(24),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4),
+                    ),
                     child: Row(
                       children: [
                         _tradeHdr('Actif', t2, flex: 2),
@@ -1205,6 +1187,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
+        ),
+      ),
       ],
     );
   }
@@ -1316,7 +1300,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
               stops: const [0.0, 0.3],
             ),
           ),
-      child: Column(
+          child: Column(
         children: [
           _perfRow('Capital initial', '\$${_fmtShort(deposits)}', 'Valeur actuelle', '\$${_fmtShort(totalVal)}', t0, t1, t0, t1),
           const SizedBox(height: 14),
@@ -1325,7 +1309,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
           _perfRow('Trades gagnants', '$sells', 'Trades perdants', '$buys', green, t1, red, t1),
           const SizedBox(height: 14),
           _perfRow('Total trades', '$totalT', 'Positions ouvertes', '${p?.positions.length ?? 0}', t0, t1, t0, t1),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
