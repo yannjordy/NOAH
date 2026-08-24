@@ -137,7 +137,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
     // Listen for Supabase auth state changes
     _authSub = widget.supabase.onAuthChange.listen((event) {
-      if (event['session'] != null && !_auth.isLoggedIn) {
+      if (event.session != null && !_auth.isLoggedIn) {
         _auth.finalizeLogin(widget.supabase);
       }
     });

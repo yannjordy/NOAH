@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/models.dart';
 
 class SupabaseService {
   static const _url = 'https://dimnepbasmswqmexlhvs.supabase.co';
@@ -136,7 +135,7 @@ class SupabaseService {
     bool ascending = false,
     int? limit,
   }) async {
-    var query = _client.from(table).select(select ?? '*');
+    dynamic query = _client.from(table).select(select ?? '*');
     if (filters != null) {
       for (final entry in filters.entries) {
         query = query.eq(entry.key, entry.value);
@@ -158,7 +157,7 @@ class SupabaseService {
   Future<void> update(String table, Map<String, dynamic> data, {
     required Map<String, dynamic> match,
   }) async {
-    var query = _client.from(table).update(data);
+    dynamic query = _client.from(table).update(data);
     for (final entry in match.entries) {
       query = query.eq(entry.key, entry.value);
     }
@@ -168,7 +167,7 @@ class SupabaseService {
   Future<void> delete(String table, {
     required Map<String, dynamic> match,
   }) async {
-    var query = _client.from(table).delete();
+    dynamic query = _client.from(table).delete();
     for (final entry in match.entries) {
       query = query.eq(entry.key, entry.value);
     }
@@ -179,5 +178,72 @@ class SupabaseService {
     String? filter,
   }) {
     return _client.from(table).stream(primaryKey: ['id']);
+  }
+
+  Future<bool> isBanned(String? email) async {
+    if (email == null) return false;
+    try {
+      final data = await _client
+          .from('banned_users')
+          .select()
+          .eq('email', email)
+          .limit(1);
+      return data.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<String?> getMinVersion() async {
+    try {
+      final data = await _client
+          .from('app_config')
+          .select('min_version')
+          .eq('key', 'version')
+          .limit(1);
+      if (data.isNotEmpty) {
+        return data.first['min_version'] as String?;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveWallet(String email, double usdt, double initialUsdt, double totalDeposits) async {
+    try {
+      await _client.from('wallets').upsert({
+        'email': email,
+        'usdt': usdt,
+        'initial_usdt': initialUsdt,
+        'total_deposits': totalDeposits,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> savePositions(String email, List<dynamic> positions) async {
+    try {
+      await _client.from('positions').upsert({
+        'email': email,
+        'positions': positions.map((p) => p.toJson()).toList(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> addTrade(String email, dynamic trade) async {
+    try {
+      await _client.from('trades').insert({
+        'email': email,
+        'side': trade.side,
+        'symbol': trade.sym,
+        'qty': trade.qty,
+        'price': trade.price,
+        'pnl': trade.pnl,
+        'time': trade.time,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
   }
 }

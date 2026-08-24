@@ -10,7 +10,7 @@ class ForegroundTaskHandler extends TaskHandler {
   void onRepeatEvent(DateTime timestamp) {}
 
   @override
-  Future<void> onDestroy(DateTime timestamp, bool timeout) async {}
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {}
 
   @override
   void onReceiveData(Object data) {}
@@ -28,20 +28,17 @@ class BackgroundService {
         channelDescription: 'Exécute le trading automatique en arrière-plan',
         channelImportance: NotificationChannelImportance.HIGH,
         priority: NotificationPriority.HIGH,
-        iconData: const NotificationIconData(
-          resType: ResourceType.mipmap,
-          resPrefix: ResourcePrefix.ic,
-          name: 'launcher',
-        ),
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: true,
+        playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        interval: 30000,
-        isOnceEvent: false,
+        eventAction: ForegroundTaskEventAction.repeat(30000),
         autoRunOnBoot: true,
         allowWakeLock: true,
         allowWifiLock: true,
       ),
-      printDevLog: false,
     );
   }
 
@@ -49,15 +46,14 @@ class BackgroundService {
     if (_running) return true;
     if (!Platform.isAndroid && !Platform.isIOS) return false;
 
+    FlutterForegroundTask.setTaskHandler(ForegroundTaskHandler());
+
     final serviceRequest = await FlutterForegroundTask.startService(
       notificationTitle: 'NOAH Trading Actif',
       notificationText: 'Le trading automatique est en cours...',
-      task: ForegroundTask(
-        taskHandler: ForegroundTaskHandler(),
-      ),
     );
 
-    _running = serviceRequest is ServiceRequestResult;
+    _running = serviceRequest is ServiceRequestSuccess;
     return _running;
   }
 
