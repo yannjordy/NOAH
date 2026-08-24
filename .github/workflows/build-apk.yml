@@ -33,6 +33,13 @@ jobs:
           cp -r lib temp_project/lib
           cp pubspec.yaml temp_project/pubspec.yaml
 
+      - name: Pin Kotlin version
+        run: |
+          cd temp_project/android
+          sed -i 's/id("org.jetbrains.kotlin.android") version "[^"]*"/id("org.jetbrains.kotlin.android") version "2.0.0"/' settings.gradle
+          sed -i 's/kotlin_version = "[^"]*"/kotlin_version = "2.0.0"/' build.gradle
+          echo "kotlin_version=2.0.0" >> gradle.properties
+
       - name: Flutter pub get
         run: cd temp_project && flutter pub get
 
