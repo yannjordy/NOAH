@@ -24,15 +24,14 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Create Flutter project
-        run: flutter create --org com.example --project-name noah_app temp_project
+      - name: Create clean Flutter project
+        run: flutter create --org com.noah --project-name noah_app temp_project
 
-      - name: Copy lib and assets
+      - name: Copy lib and pubspec
         run: |
-          cp -r lib/* temp_project/lib/
-          cp -f pubspec.yaml temp_project/pubspec.yaml
-          rm -rf temp_project/android
-          cp -r android temp_project/android
+          rm -rf temp_project/lib
+          cp -r lib temp_project/lib
+          cp pubspec.yaml temp_project/pubspec.yaml
 
       - name: Flutter pub get
         run: cd temp_project && flutter pub get
