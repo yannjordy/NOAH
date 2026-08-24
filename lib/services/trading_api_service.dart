@@ -48,6 +48,11 @@ class TradingApiService {
 
   late final Dio _dio;
 
+  final Map<String, double> basePrices = {
+    'BTC': 65000, 'ETH': 3500, 'BNB': 580, 'SOL': 145,
+    'XRP': 0.52, 'ADA': 0.45, 'DOGE': 0.12, 'DOT': 7.2,
+  };
+
   Future<bool> healthCheck() async {
     return true;
   }

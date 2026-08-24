@@ -178,6 +178,7 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
+    final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final bg = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
 
     return Container(

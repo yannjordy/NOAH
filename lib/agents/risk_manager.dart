@@ -49,6 +49,8 @@ class RiskManager {
     return kelly.clamp(0.05, 0.5);
   }
 
+  Map<String, dynamic> toJson() => assessRisk().toJson();
+
   RiskReport assessRisk() {
     final totalValue = data.usdt + data.positionsValue;
     final posValue = data.positionsValue;

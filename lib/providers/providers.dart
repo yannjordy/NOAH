@@ -315,6 +315,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDemo(bool v) {
+    _isDemo = v;
+    _storage.setDemoMode(_isDemo);
+    notifyListeners();
+  }
+
   void setNotifyTrades(bool v) {
     _notifyTrades = v;
     NotificationService.suppressTradeNotifications = !v;

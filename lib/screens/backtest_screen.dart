@@ -5,6 +5,7 @@ import '../providers/providers.dart';
 import '../services/market_service.dart';
 import '../theme/noah_theme.dart';
 import '../agents/backtest_agent.dart';
+import '../agents/agent_base.dart';
 import '../theme/glass_theme.dart';
 
 /// Backtesting screen with glass morphism design
