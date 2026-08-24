@@ -1,4 +1,5 @@
 import '../models/models.dart' show Kline;
+import '../utils.dart';
 
 class AgentContext {
   final Map<String, double> prices;
@@ -99,17 +100,3 @@ abstract class BaseAgent {
 }
 
 typedef AiThinker = Future<String> Function(String prompt, {String? systemContext});
-
-String fmt(double p) {
-  if (p >= 1000) {
-    final parts = p.toStringAsFixed(0);
-    final buffer = StringBuffer('\$');
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) buffer.write(',');
-      buffer.write(parts[i]);
-    }
-    return buffer.toString();
-  }
-  if (p >= 1) return '\$${p.toStringAsFixed(2)}';
-  return '\$${p.toStringAsFixed(4)}';
-}

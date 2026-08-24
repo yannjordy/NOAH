@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../models/models.dart';
 import '../theme/noah_theme.dart';
+import '../utils.dart';
 
 enum AnnotationType { trendLine, horizontal, ray, text }
 

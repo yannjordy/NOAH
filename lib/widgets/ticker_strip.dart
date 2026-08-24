@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-
-String fmt(double v) {
-  if (v >= 1000) return v.toStringAsFixed(0);
-  if (v >= 1) return v.toStringAsFixed(2);
-  return v.toStringAsFixed(4);
-}
+import '../utils.dart';
 
 class TickerStrip extends StatelessWidget {
   final String currentSymbol;

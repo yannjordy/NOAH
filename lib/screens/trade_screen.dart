@@ -8,6 +8,7 @@ import '../widgets/candlestick_chart.dart';
 import '../widgets/order_book.dart';
 import '../widgets/glass_chart.dart';
 import '../widgets/trading_mode_toggle.dart';
+import '../utils.dart';
 
 class TradeScreen extends StatefulWidget {
   final PortfolioProvider portfolio;
@@ -36,6 +37,7 @@ class TradeScreen extends StatefulWidget {
 }
 
 class _TradeScreenState extends State<TradeScreen> {
+  Map<String, double> get basePrices => {};
   final _qtyCtrl = TextEditingController(text: '0.001');
   final _slCtrl = TextEditingController();
   final _tpCtrl = TextEditingController();

@@ -5,6 +5,7 @@ import '../providers/providers.dart';
 import '../theme/noah_theme.dart';
 import '../widgets/glass_portfolio_charts.dart';
 import '../theme/glass_theme.dart';
+import '../utils.dart';
 
 class PortfolioScreen extends StatelessWidget {
   final PortfolioProvider portfolio;
@@ -398,7 +399,7 @@ class PortfolioScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(t.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t0)),
-                Text(t.time, style: TextStyle(fontSize: 9, color: t2)),
+                Text(t.time.toString(), style: TextStyle(fontSize: 9, color: t2)),
               ],
             ),
           ),

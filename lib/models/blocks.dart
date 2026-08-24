@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../utils.dart';
 
 enum BlockType { text, signalHeader, priceCard, chartPreview, riskGauge, portfolioSummary, factorGrid, divider, signalCard, table, lineChart, pieChart, barChart, tradingToggle }
 

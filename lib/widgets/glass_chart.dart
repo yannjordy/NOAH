@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/market_service.dart';
 import '../theme/noah_theme.dart';
+import '../utils.dart';
 
 /// TradingView-style chart widget with glass morphism
 class GlassChartWidget extends StatelessWidget {

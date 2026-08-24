@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
+import '../utils.dart';
 
 
 class CoreScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class CoreScreen extends StatefulWidget {
 }
 
 class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
+  bool get isNetworkStable => true;
   String _greeting = '';
   String _greetingEmoji = '';
   String _date = '';
