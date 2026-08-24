@@ -28,7 +28,7 @@ class TradingModeToggle extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: bg1.withValues(alpha: isDark ? 0.6 : 0.7),
+            color: bg1.withOpacity( isDark ? 0.6 : 0.7),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border),
           ),
@@ -42,12 +42,12 @@ class TradingModeToggle extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: !isPro
-                          ? accent.withValues(alpha: 0.15)
+                          ? accent.withOpacity( 0.15)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(11),
                       border: Border.all(
                         color: !isPro
-                            ? accent.withValues(alpha: 0.3)
+                            ? accent.withOpacity( 0.3)
                             : Colors.transparent,
                       ),
                     ),
@@ -81,12 +81,12 @@ class TradingModeToggle extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: isPro
-                          ? accent.withValues(alpha: 0.15)
+                          ? accent.withOpacity( 0.15)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(11),
                       border: Border.all(
                         color: isPro
-                            ? accent.withValues(alpha: 0.3)
+                            ? accent.withOpacity( 0.3)
                             : Colors.transparent,
                       ),
                     ),

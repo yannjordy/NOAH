@@ -44,12 +44,12 @@ class GlassChartWidget extends StatelessWidget {
           height: height,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: bg1.withValues(alpha: isDark ? 0.7 : 0.8),
+            color: bg1.withOpacity( isDark ? 0.7 : 0.8),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                color: Colors.black.withOpacity( isDark ? 0.3 : 0.06),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -75,8 +75,8 @@ class GlassChartWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: up
-                          ? green.withValues(alpha: 0.12)
-                          : red.withValues(alpha: 0.12),
+                          ? green.withOpacity( 0.12)
+                          : red.withOpacity( 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -118,12 +118,12 @@ class GlassChartWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? accent.withValues(alpha: 0.15)
+                          ? accent.withOpacity( 0.15)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isActive
-                            ? accent.withValues(alpha: 0.3)
+                            ? accent.withOpacity( 0.3)
                             : Colors.transparent,
                       ),
                     ),
@@ -179,7 +179,7 @@ class GlassChartWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.candlestick_chart, size: 32, color: t2.withValues(alpha: 0.3)),
+          Icon(Icons.candlestick_chart, size: 32, color: t2.withOpacity( 0.3)),
           const SizedBox(height: 8),
           Text(
             'Chargement du graphique...',
@@ -223,7 +223,7 @@ class _CandlestickPainter extends CustomPainter {
 
     // Grid lines
     final gridPaint = Paint()
-      ..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04)
+      ..color = (isDark ? Colors.white : Colors.black).withOpacity( 0.04)
       ..strokeWidth = 0.5;
     for (int i = 0; i < 5; i++) {
       final y = h * i / 4;
@@ -245,7 +245,7 @@ class _CandlestickPainter extends CustomPainter {
 
       // Wick
       final wickPaint = Paint()
-        ..color = color.withValues(alpha: 0.6)
+        ..color = color.withOpacity( 0.6)
         ..strokeWidth = 1;
       canvas.drawLine(
         Offset(x, h - high),
@@ -269,7 +269,7 @@ class _CandlestickPainter extends CustomPainter {
     // Moving average line (SMA20)
     if (closes.length >= 20) {
       final maPaint = Paint()
-        ..color = accent.withValues(alpha: 0.5)
+        ..color = accent.withOpacity( 0.5)
         ..strokeWidth = 1.5
         ..style = PaintingStyle.stroke;
       final path = Path();

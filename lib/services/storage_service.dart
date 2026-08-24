@@ -151,6 +151,51 @@ class StorageService {
     _set(_connectedModelsKey, jsonEncode(models));
   }
 
+  // API Keys
+  Map<String, dynamic> getApiKeys() {
+    final data = _get('${_prefix}api_keys');
+    if (data.isEmpty) return {};
+    try {
+      return Map<String, dynamic>.from(jsonDecode(data));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  void saveApiKeys(Map<String, dynamic> keys) {
+    _set('${_prefix}api_keys', jsonEncode(keys));
+  }
+
+  // Portfolio persistence
+  PortfolioData loadPortfolio() {
+    final data = _get('${_prefix}portfolio');
+    if (data.isEmpty) return PortfolioData();
+    try {
+      return PortfolioData.fromJson(jsonDecode(data) as Map<String, dynamic>);
+    } catch (_) {
+      return PortfolioData();
+    }
+  }
+
+  void savePortfolio(PortfolioData portfolio) {
+    _set('${_prefix}portfolio', jsonEncode(portfolio.toJson()));
+  }
+
+  // Risk persistence
+  dynamic loadRisk() {
+    final data = _get('${_prefix}risk');
+    if (data.isEmpty) return null;
+    try {
+      return jsonDecode(data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void saveRisk(dynamic data) {
+    _set('${_prefix}risk', jsonEncode(data));
+  }
+
   // Agent memory
   String getAgentMemory(String agent) => _get('$_agentMemoryKey$agent');
   void setAgentMemory(String agent, String data) => _set('$_agentMemoryKey$agent', data);

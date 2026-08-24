@@ -118,17 +118,17 @@ class _NotificationBarState extends State<NotificationBar>
             AnimatedContainer(
               duration: const Duration(milliseconds: 400),
               height: 3,
-              color: barColor.withValues(alpha: opacity),
+              color: barColor.withOpacity( opacity),
             ),
             // Banner
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: barColor.withValues(alpha: pulse ? 0.08 * opacity : 0.08),
+                color: barColor.withOpacity( pulse ? 0.08 * opacity : 0.08),
                 border: Border(
                   bottom: BorderSide(
-                    color: barColor.withValues(alpha: pulse ? 0.15 * opacity : 0.15),
+                    color: barColor.withOpacity( pulse ? 0.15 * opacity : 0.15),
                     width: 0.5,
                   ),
                 ),
@@ -136,14 +136,14 @@ class _NotificationBarState extends State<NotificationBar>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 12, color: textColor.withValues(alpha: opacity)),
+                  Icon(icon, size: 12, color: textColor.withOpacity( opacity)),
                   const SizedBox(width: 6),
                   Text(
                     label,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: textColor.withValues(alpha: opacity),
+                      color: textColor.withOpacity( opacity),
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -166,10 +166,10 @@ class _NotificationBarState extends State<NotificationBar>
       height: 5,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: opacity),
+        color: color.withOpacity( opacity),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: opacity * 0.5),
+            color: color.withOpacity( opacity * 0.5),
             blurRadius: 3,
             spreadRadius: 1,
           ),

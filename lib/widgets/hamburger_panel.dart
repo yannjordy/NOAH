@@ -98,7 +98,7 @@ class HamburgerPanel extends StatelessWidget {
                             letterSpacing: 4,
                             color: accent,
                             shadows: [
-                              Shadow(color: accent.withValues(alpha: 0.3), blurRadius: 8),
+                              Shadow(color: accent.withOpacity( 0.3), blurRadius: 8),
                             ],
                           )),
                           const SizedBox(width: 10),
@@ -148,10 +148,10 @@ class HamburgerPanel extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16),
                                       color: active
-                                          ? accent.withValues(alpha: 0.15)
+                                          ? accent.withOpacity( 0.15)
                                           : Colors.transparent,
                                     ),
-                                    child: Center(child: _menuIcon(item.$3, active ? accent : t1)),
+                                    child: Center(child: Icon(_menuIcon(item.$3, active ? accent : t1), size: 18, color: active ? accent : t1)),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -205,7 +205,7 @@ class HamburgerPanel extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: accentBg,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: accent.withValues(alpha: 0.2)),
+                              border: Border.all(color: accent.withOpacity( 0.2)),
                             ),
                             child: Row(
                               children: [
@@ -235,7 +235,7 @@ class HamburgerPanel extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: accentBg,
-                          border: Border.all(color: accent.withValues(alpha: 0.3)),
+                          border: Border.all(color: accent.withOpacity( 0.3)),
                         ),
                         child: Icon(Icons.person, size: 18, color: accent),
                       ),

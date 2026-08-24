@@ -269,14 +269,14 @@ class _TradingToggleBlock extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isActive
-                  ? [green.withValues(alpha: 0.12), green.withValues(alpha: 0.03)]
-                  : [accent.withValues(alpha: 0.15), accent.withValues(alpha: 0.05)],
+                  ? [green.withOpacity( 0.12), green.withOpacity( 0.03)]
+                  : [accent.withOpacity( 0.15), accent.withOpacity( 0.05)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isActive ? green.withValues(alpha: 0.2) : accent.withValues(alpha: 0.2),
+              color: isActive ? green.withOpacity( 0.2) : accent.withOpacity( 0.2),
             ),
           ),
           child: Row(
@@ -284,7 +284,7 @@ class _TradingToggleBlock extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isActive ? green.withValues(alpha: 0.2) : accent.withValues(alpha: 0.2),
+                  color: isActive ? green.withOpacity( 0.2) : accent.withOpacity( 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -397,9 +397,9 @@ class _SignalHeaderBlockState extends State<_SignalHeaderBlock> with SingleTicke
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [ac.withValues(alpha: 0.15), ac.withValues(alpha: 0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            gradient: LinearGradient(colors: [ac.withOpacity( 0.15), ac.withOpacity( 0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: ac.withValues(alpha: 0.3)),
+            border: Border.all(color: ac.withOpacity( 0.3)),
           ),
           child: Column(
             children: [
@@ -412,9 +412,9 @@ class _SignalHeaderBlockState extends State<_SignalHeaderBlock> with SingleTicke
                     builder: (_, __) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: ac.withValues(alpha: 0.15 + _pulseCtrl.value * 0.1),
+                        color: ac.withOpacity( 0.15 + _pulseCtrl.value * 0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: ac.withValues(alpha: 0.4)),
+                        border: Border.all(color: ac.withOpacity( 0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -442,7 +442,7 @@ class _SignalHeaderBlockState extends State<_SignalHeaderBlock> with SingleTicke
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (change >= 0 ? green(widget.d) : red(widget.d)).withValues(alpha: 0.15),
+                      color: (change >= 0 ? green(widget.d) : red(widget.d)).withOpacity( 0.15),
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text('${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'JetBrainsMono', color: change >= 0 ? green(widget.d) : red(widget.d))),
@@ -463,7 +463,7 @@ class _SignalHeaderBlockState extends State<_SignalHeaderBlock> with SingleTicke
                           widthFactor: conf,
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [ac.withValues(alpha: 0.3), ac], begin: Alignment.centerLeft, end: Alignment.centerRight),
+                              gradient: LinearGradient(colors: [ac.withOpacity( 0.3), ac], begin: Alignment.centerLeft, end: Alignment.centerRight),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -513,7 +513,7 @@ class _PriceCardBlock extends StatelessWidget {
         children: [
           Container(
             width: 36, height: 36,
-            decoration: BoxDecoration(color: c.withValues(alpha: 0.15), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: c.withOpacity( 0.15), shape: BoxShape.circle),
             child: Center(child: Icon(up ? Icons.trending_up : Icons.trending_down, size: 16, color: c)),
           ),
           const SizedBox(width: 10),
@@ -589,7 +589,7 @@ class _SparklinePainter extends CustomPainter {
 
     final fillPaint = Paint()
       ..shader = LinearGradient(
-        colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.0)],
+        colors: [color.withOpacity( 0.25), color.withOpacity( 0.0)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -669,7 +669,7 @@ class _RiskGaugeBlockState extends State<_RiskGaugeBlock> with SingleTickerProvi
           decoration: BoxDecoration(
             color: widget.d ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: cb ? red(widget.d).withValues(alpha: 0.5) : widget.d ? const Color(0x0DFFFFFF) : const Color(0x0F000000)),
+            border: Border.all(color: cb ? red(widget.d).withOpacity( 0.5) : widget.d ? const Color(0x0DFFFFFF) : const Color(0x0F000000)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -696,7 +696,7 @@ class _RiskGaugeBlockState extends State<_RiskGaugeBlock> with SingleTickerProvi
                   padding: const EdgeInsets.only(top: 8),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: red(widget.d).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8), border: Border.all(color: red(widget.d).withValues(alpha: 0.3))),
+                    decoration: BoxDecoration(color: red(widget.d).withOpacity( 0.15), borderRadius: BorderRadius.circular(8), border: Border.all(color: red(widget.d).withOpacity( 0.3))),
                     child: Text('Circuit Breaker activé', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: red(widget.d))),
                   ),
                 ),
@@ -894,9 +894,9 @@ class _SignalCardBlock extends StatelessWidget {
       margin: const EdgeInsets.only(top: 2),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ac.withValues(alpha: 0.1),
+        color: ac.withOpacity( 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ac.withValues(alpha: 0.25)),
+        border: Border.all(color: ac.withOpacity( 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1121,7 +1121,7 @@ class _LineChartPainter extends CustomPainter {
 
     final fillPaint = Paint()
       ..shader = LinearGradient(
-        colors: [color.withValues(alpha: 0.3), color.withValues(alpha: 0.0)],
+        colors: [color.withOpacity( 0.3), color.withOpacity( 0.0)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(hPad, vPad, chartW, chartH));
@@ -1146,7 +1146,7 @@ class _LineChartPainter extends CustomPainter {
       final lastX = hPad + (visibleCount - 1) * stepX;
       final lastY = vPad + chartH - ((series[visibleCount - 1] - minVal) / range) * chartH;
       canvas.drawCircle(Offset(lastX, lastY), 4, Paint()..color = color);
-      canvas.drawCircle(Offset(lastX, lastY), 8, Paint()..color = color.withValues(alpha: 0.2));
+      canvas.drawCircle(Offset(lastX, lastY), 8, Paint()..color = color.withOpacity( 0.2));
     }
 
     fillPath.lineTo(hPad + (visibleCount - 1) * stepX, vPad + chartH);
@@ -1425,7 +1425,7 @@ class _BarChartPainter extends CustomPainter {
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(Rect.fromLTWH(x, y, barW, barH), const Radius.circular(4)),
-        Paint()..color = barColor.withValues(alpha: alpha),
+        Paint()..color = barColor.withOpacity( alpha),
       );
 
       if (labels.length > i) {

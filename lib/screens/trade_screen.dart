@@ -174,7 +174,7 @@ class _TradeScreenState extends State<TradeScreen> {
             decoration: BoxDecoration(
               color: amberBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: amber.withValues(alpha: 0.3)),
+              border: Border.all(color: amber.withOpacity( 0.3)),
             ),
             child: Row(
               children: [
@@ -279,7 +279,7 @@ class _TradeScreenState extends State<TradeScreen> {
                     decoration: BoxDecoration(
                       color: posPnl >= 0 ? greenBg : redBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: posPnl >= 0 ? green.withValues(alpha: 0.3) : red.withValues(alpha: 0.3)),
+                      border: Border.all(color: posPnl >= 0 ? green.withOpacity( 0.3) : red.withOpacity( 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -424,7 +424,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: sigColor.withValues(alpha: 0.15),
+                            color: sigColor.withOpacity( 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(sig.action, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: sigColor, letterSpacing: 1.2)),

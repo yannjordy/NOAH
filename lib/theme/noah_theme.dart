@@ -66,12 +66,12 @@ class NoahTheme {
 
   static List<BoxShadow> shadow(bool isDark) => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+          color: Colors.black.withOpacity( isDark ? 0.3 : 0.04),
           blurRadius: 4,
           offset: const Offset(0, 1),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+          color: Colors.black.withOpacity( isDark ? 0.2 : 0.03),
           blurRadius: 2,
           offset: const Offset(0, 1),
         ),
@@ -79,12 +79,12 @@ class NoahTheme {
 
   static List<BoxShadow> shadowMd(bool isDark) => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+          color: Colors.black.withOpacity( isDark ? 0.4 : 0.06),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+          color: Colors.black.withOpacity( isDark ? 0.2 : 0.03),
           blurRadius: 4,
           offset: const Offset(0, 2),
         ),

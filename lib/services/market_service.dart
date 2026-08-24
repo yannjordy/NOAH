@@ -248,6 +248,15 @@ class MarketService extends ChangeNotifier {
     _closeKlineWs();
   }
 
+  void simulatePrices() {
+    for (final sym in symbols) {
+      final current = prices[sym] ?? 100.0;
+      final change = current * (DateTime.now().millisecond % 100 - 50) / 100000;
+      prices[sym] = current + change;
+      pcts[sym] = (pcts[sym] ?? 0) + change / current * 100;
+    }
+  }
+
   @override
   void dispose() {
     _closeWs();

@@ -52,7 +52,7 @@ class GlassEquityCurve extends StatelessWidget {
           height: height,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: bg1.withValues(alpha: isDark ? 0.7 : 0.8),
+            color: bg1.withOpacity( isDark ? 0.7 : 0.8),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: border, width: 1),
           ),
@@ -139,8 +139,8 @@ class _EquityPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          color.withValues(alpha: 0.2),
-          color.withValues(alpha: 0.0),
+          color.withOpacity( 0.2),
+          color.withOpacity( 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(fillPath, fillPaint);

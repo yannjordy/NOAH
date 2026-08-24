@@ -224,14 +224,14 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: connected
-                              ? accent.withValues(alpha: 0.3)
+                              ? accent.withOpacity( 0.3)
                               : borderMd,
                           width: connected ? 1.5 : 1,
                         ),
                         boxShadow: connected
                             ? [
                                 BoxShadow(
-                                  color: accent.withValues(alpha: 0.1),
+                                  color: accent.withOpacity( 0.1),
                                   blurRadius: 12,
                                 ),
                               ]
@@ -247,7 +247,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                 height: 36,
                                 decoration: BoxDecoration(
                                   color: connected
-                                      ? accent.withValues(alpha: 0.15)
+                                      ? accent.withOpacity( 0.15)
                                       : bg2,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -304,7 +304,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                                           ? green
                                                           : red)
                                                     : green)
-                                                .withValues(alpha: 0.5),
+                                                .withOpacity( 0.5),
                                         blurRadius: 4,
                                       ),
                                     ],
@@ -456,8 +456,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: (ok ? green : red).withValues(
-                                          alpha: 0.1,
+                                        color: (ok ? green : red).withOpacity(
+                                          0.1,
                                         ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -519,10 +519,10 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: red.withValues(alpha: 0.1),
+                                    color: red.withOpacity( 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: red.withValues(alpha: 0.2),
+                                      color: red.withOpacity( 0.2),
                                     ),
                                   ),
                                   child: Text(
@@ -679,9 +679,9 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.15),
+          color: accent.withOpacity( 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accent.withValues(alpha: 0.3)),
+          border: Border.all(color: accent.withOpacity( 0.3)),
         ),
         child: Center(
           child: loading
@@ -713,7 +713,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [accent, accent.withValues(alpha: 0.8)],
+            colors: [accent, accent.withOpacity( 0.8)],
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -737,9 +737,9 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: red.withValues(alpha: 0.1),
+          color: red.withOpacity( 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: red.withValues(alpha: 0.3)),
+          border: Border.all(color: red.withOpacity( 0.3)),
         ),
         child: Center(
           child: Text(

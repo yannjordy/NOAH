@@ -30,8 +30,8 @@ class BlockingOverlay extends StatelessWidget {
                 height: 72,
                 decoration: BoxDecoration(
                   color: reason == BlockReason.banned
-                      ? const Color(0xFFE07060).withValues(alpha: 0.15)
-                      : accent.withValues(alpha: 0.15),
+                      ? const Color(0xFFE07060).withOpacity( 0.15)
+                      : accent.withOpacity( 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(

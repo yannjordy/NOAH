@@ -369,6 +369,10 @@ class BinanceService {
     return prices;
   }
 
+  Future<List<BinanceBalance>> getAccountBalances() async {
+    return getBalances();
+  }
+
   Future<Map<String, List<List<double>>>> getOrderBook(
     String symbol, {
     int limit = 20,

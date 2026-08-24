@@ -64,7 +64,7 @@ class PortfolioScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: amberBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: amber.withValues(alpha: 0.3)),
+                  border: Border.all(color: amber.withOpacity( 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -440,7 +440,7 @@ class PortfolioScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: bg2.withValues(alpha: 0.5),
+                color: bg2.withOpacity( 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: borderMd),
               ),
@@ -697,7 +697,7 @@ class PortfolioScreen extends StatelessWidget {
                       children: [
                         Container(
                           width: 32, height: 32,
-                          decoration: BoxDecoration(color: accent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                          decoration: BoxDecoration(color: accent.withOpacity( 0.15), borderRadius: BorderRadius.circular(20)),
                           child: Center(child: Text(pos.sym.substring(0, 3), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: accent))),
                         ),
                         const SizedBox(width: 10),
@@ -853,7 +853,7 @@ class _SparklinePainter extends CustomPainter {
     final grad = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.0)],
+      colors: [color.withOpacity( 0.15), color.withOpacity( 0.0)],
     );
     canvas.drawPath(path, Paint()..shader = grad.createShader(Rect.fromLTWH(0, 0, size.width, size.height)));
 

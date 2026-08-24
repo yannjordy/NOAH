@@ -225,9 +225,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
               builder: (_, __) => Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: accent.withOpacity( 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                  border: Border.all(color: accent.withOpacity( 0.25)),
                 ),
                 child: Icon(Icons.refresh_rounded, size: 16, color: accent),
               ),
@@ -254,8 +254,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: bg1,
                     shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: 0.25), width: 1.5),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 1))],
+                    border: Border.all(color: accent.withOpacity( 0.25), width: 1.5),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.1), blurRadius: 4, offset: const Offset(0, 1))],
                   ),
                   child: Center(
                     child: Text(
@@ -299,10 +299,10 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: isUp ? green.withValues(alpha: 0.25) : red.withValues(alpha: 0.25)),
+          border: Border.all(color: isUp ? green.withOpacity( 0.25) : red.withOpacity( 0.25)),
           boxShadow: [
             BoxShadow(
-              color: (isUp ? green : red).withValues(alpha: 0.08),
+              color: (isUp ? green : red).withOpacity( 0.08),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -332,8 +332,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                     width: 8, height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: pnlColor.withValues(alpha: 0.5 + _glowAnim.value * 0.5),
-                      boxShadow: [BoxShadow(color: pnlColor.withValues(alpha: _glowAnim.value * 0.4), blurRadius: 6, spreadRadius: 1)],
+                      color: pnlColor.withOpacity( 0.5 + _glowAnim.value * 0.5),
+                      boxShadow: [BoxShadow(color: pnlColor.withOpacity( _glowAnim.value * 0.4), blurRadius: 6, spreadRadius: 1)],
                     ),
                   ),
                 ),
@@ -353,7 +353,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.black.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.5),
+                color: isDark ? Colors.black.withOpacity( 0.15) : Colors.white.withOpacity( 0.5),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -416,7 +416,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                      color: up ? green.withValues(alpha: 0.15) : red.withValues(alpha: 0.15),
+                      color: up ? green.withOpacity( 0.15) : red.withOpacity( 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text('${up ? '+' : ''}${c.toStringAsFixed(1)}%',
@@ -529,7 +529,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             const SizedBox(width: 8),
             Expanded(child: _actionCard(
               icon: Icons.language_rounded, label: 'Marché global',
-              desc: 'Tendance et sentiment', color: green, bg: greenBg, border: green.withValues(alpha: 0.25),
+              desc: 'Tendance et sentiment', color: green, bg: greenBg, border: green.withOpacity( 0.25),
               isDark: isDark, onTap: () => _sendQuick('Tendance du marché'),
             )),
           ],
@@ -540,14 +540,14 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             Expanded(child: _actionCard(
               icon: Icons.shield_rounded, label: 'Évaluer risques',
               desc: 'Analyse des risques actuels', color: const Color(0xFFD4A84B), bg: const Color(0x14D4A84B),
-              border: const Color(0xFFD4A84B).withValues(alpha: 0.25),
+              border: const Color(0xFFD4A84B).withOpacity( 0.25),
               isDark: isDark, onTap: () => _sendQuick('Évaluation des risques'),
             )),
             const SizedBox(width: 8),
             Expanded(child: _actionCard(
               icon: Icons.psychology_rounded, label: ' Voir équipe',
               desc: '8 agents spécialisés', color: const Color(0xFF4A90D9), bg: const Color(0x1A4A90D9),
-              border: const Color(0xFF4A90D9).withValues(alpha: 0.25),
+              border: const Color(0xFF4A90D9).withOpacity( 0.25),
               isDark: isDark, onTap: () => _showTeamSheet(context, isDark),
             )),
           ],
@@ -592,7 +592,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 16, color: color.withValues(alpha: 0.5)),
+            Icon(Icons.chevron_right_rounded, size: 16, color: color.withOpacity( 0.5)),
           ],
         ),
       ),
@@ -631,7 +631,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: networkColor.withValues(alpha: _pulseAnim.value * 0.5),
+                    color: networkColor.withOpacity( _pulseAnim.value * 0.5),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -653,9 +653,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.1),
+              color: accent.withOpacity( 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: accent.withValues(alpha: 0.2)),
+              border: Border.all(color: accent.withOpacity( 0.2)),
             ),
             child: Text('24/7', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: accent, letterSpacing: 1)),
           ),
@@ -687,7 +687,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             color: bg1,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: border),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.04), blurRadius: 12, offset: const Offset(0, 4))],
           ),
           child: Column(
             children: [
@@ -702,7 +702,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                         progress: _chartAnim.value,
                         minVal: minVal,
                         range: range,
-                        gridColor: t2.withValues(alpha: 0.12),
+                        gridColor: t2.withOpacity( 0.12),
                         upColor: green,
                         downColor: red,
                       ),
@@ -819,7 +819,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: valBg,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: valColor.withValues(alpha: 0.3)),
+                    border: Border.all(color: valColor.withOpacity( 0.3)),
                   ),
                 ),
               if (valBg != const Color(0x00000000)) const SizedBox(width: 6),
@@ -845,12 +845,12 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [accent.withValues(alpha: 0.06), accent.withValues(alpha: 0.01)],
+            colors: [accent.withOpacity( 0.06), accent.withOpacity( 0.01)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: accent.withValues(alpha: 0.15)),
+          border: Border.all(color: accent.withOpacity( 0.15)),
         ),
         child: Row(
           children: [
@@ -859,11 +859,11 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
               builder: (_, __) => Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: accent.withOpacity( 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accent.withValues(alpha: 0.2)),
+                  border: Border.all(color: accent.withOpacity( 0.2)),
                 ),
-                child: Icon(Icons.groups_rounded, size: 22, color: accent.withValues(alpha: 0.6 + _pulseAnim.value * 0.4)),
+                child: Icon(Icons.groups_rounded, size: 22, color: accent.withOpacity( 0.6 + _pulseAnim.value * 0.4)),
               ),
             ),
             const SizedBox(width: 14),
@@ -880,9 +880,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             Container(
               width: 28, height: 28,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.1),
+                color: accent.withOpacity( 0.1),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: accent.withValues(alpha: 0.2)),
+                border: Border.all(color: accent.withOpacity( 0.2)),
               ),
               child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: accent),
             ),
@@ -923,7 +923,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 Center(
                   child: Container(
                     width: 36, height: 4,
-                    decoration: BoxDecoration(color: t2.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: t2.withOpacity( 0.3), borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -974,7 +974,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: genderColor.withValues(alpha: 0.15),
+                color: genderColor.withOpacity( 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(_agentIcons[name]!, size: 18, color: genderColor),
@@ -1117,19 +1117,19 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     return Container(
       height: 140,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.03),
+        color: Colors.black.withOpacity( 0.03),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: t2.withValues(alpha: 0.1)),
+        border: Border.all(color: t2.withOpacity( 0.1)),
       ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long_rounded, size: 32, color: t2.withValues(alpha: 0.3)),
+            Icon(Icons.receipt_long_rounded, size: 32, color: t2.withOpacity( 0.3)),
             const SizedBox(height: 8),
             Text('Aucun trade pour le moment', style: TextStyle(fontSize: 13, color: t2, fontWeight: FontWeight.w600)),
             const SizedBox(height: 3),
-            Text('Demandez à NOAH d\'analyser le marché', style: TextStyle(fontSize: 10, color: t2.withValues(alpha: 0.6))),
+            Text('Demandez à NOAH d\'analyser le marché', style: TextStyle(fontSize: 10, color: t2.withOpacity( 0.6))),
           ],
         ),
       ),
@@ -1162,9 +1162,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
-                    color: selected ? accent.withValues(alpha: 0.15) : Colors.transparent,
+                    color: selected ? accent.withOpacity( 0.15) : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
-                    border: selected ? Border.all(color: accent.withValues(alpha: 0.3)) : null,
+                    border: selected ? Border.all(color: accent.withOpacity( 0.3)) : null,
                   ),
                   child: Text(timeFrames[i], style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: selected ? accent : t2, letterSpacing: 0.3)),
                 ),
@@ -1194,7 +1194,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
         color: bg1,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -1250,7 +1250,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
             gradient: LinearGradient(
-              colors: [accent, accent.withValues(alpha: 0.2)],
+              colors: [accent, accent.withOpacity( 0.2)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -1335,7 +1335,7 @@ class _PnLChartPainter extends CustomPainter {
         ..lineTo(x1, h)
         ..lineTo(x0, h)
         ..close();
-      canvas.drawPath(segPath, Paint()..color = segColor.withValues(alpha: 0.08));
+      canvas.drawPath(segPath, Paint()..color = segColor.withOpacity( 0.08));
     }
 
     for (int i = 1; i < visible.length; i++) {

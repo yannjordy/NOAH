@@ -29,8 +29,8 @@ class _FrostedButton extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF2A2A2A).withValues(alpha: 0.85),
-              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFF3A3A3A).withValues(alpha: 0.3)),
+              color: isDark ? Colors.white.withOpacity( 0.08) : const Color(0xFF2A2A2A).withOpacity( 0.85),
+              border: Border.all(color: isDark ? Colors.white.withOpacity( 0.12) : const Color(0xFF3A3A3A).withOpacity( 0.3)),
             ),
             child: child,
           ),
@@ -186,8 +186,8 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            bg.withValues(alpha: 0),
-            bg.withValues(alpha: 0.85),
+            bg.withOpacity( 0),
+            bg.withOpacity( 0.85),
           ],
         ),
       ),
@@ -222,7 +222,7 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.white.withOpacity( 0.06),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -252,9 +252,9 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFEAE6DC).withValues(alpha: 0.9),
+                        color: isDark ? Colors.white.withOpacity( 0.06) : const Color(0xFFEAE6DC).withOpacity( 0.9),
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFD5D0C6)),
+                        border: Border.all(color: isDark ? Colors.white.withOpacity( 0.08) : const Color(0xFFD5D0C6)),
                       ),
                       child: Row(
                         children: [
@@ -326,9 +326,9 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity( 0.1),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+          border: Border.all(color: color.withOpacity( 0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

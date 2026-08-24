@@ -137,7 +137,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
     // Listen for Supabase auth state changes
     _authSub = widget.supabase.onAuthChange.listen((event) {
-      if (event.session != null && !_auth.isLoggedIn) {
+      if (event['session'] != null && !_auth.isLoggedIn) {
         _auth.finalizeLogin(widget.supabase);
       }
     });
@@ -639,7 +639,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                                 animation: _overlayCtrl,
                                 builder: (context, _) {
                                   return Container(
-                                    color: Colors.black.withValues(alpha: 0.5 * _overlayAnim.value),
+                                    color: Colors.black.withOpacity( 0.5 * _overlayAnim.value),
                                   );
                                 },
                               ),
@@ -672,7 +672,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                         Positioned.fill(
                           child: GestureDetector(
                             onTap: _closeLogin,
-                            child: Container(color: Colors.black.withValues(alpha: 0.45)),
+                            child: Container(color: Colors.black.withOpacity( 0.45)),
                           ),
                         ),
                       if (_loginOpen)
@@ -763,7 +763,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: isLive ? const Color(0xFF4CAF8E) : isSimu ? const Color(0xFFD4A84B) : const Color(0xFF6C6C6C),
-                                  boxShadow: isLive ? [BoxShadow(color: const Color(0xFF4CAF8E).withValues(alpha: 0.6), blurRadius: 4, spreadRadius: 1)] : null,
+                                  boxShadow: isLive ? [BoxShadow(color: const Color(0xFF4CAF8E).withOpacity( 0.6), blurRadius: 4, spreadRadius: 1)] : null,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -847,7 +847,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       case 5:
         return RiskScreen(risk: _risk, portfolio: _portfolio);
       case 6:
-        return SettingsScreen(settings: _settings, risk: _risk, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin);
+        return SettingsScreen(settings: _settings, risk: _risk, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: () => _openLogin(0));
       case 7:
         return const AboutScreen();
       case 8:
@@ -889,7 +889,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(topX1, topY1),
       Offset(topX2, topY2),
-      basePaint..color = basePaint.color.withValues(alpha: 1.0),
+      basePaint..color = basePaint.color.withOpacity( 1.0),
     );
 
     // Mid line: fades out
@@ -897,7 +897,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(cx - 9, cy),
       Offset(cx + 9, cy),
-      basePaint..color = basePaint.color.withValues(alpha: midOpacity),
+      basePaint..color = basePaint.color.withOpacity( midOpacity),
     );
 
     // Bottom line: rotate from 0 to -45deg around center, translateY from +5 to 0
@@ -911,7 +911,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(botX1, botY1),
       Offset(botX2, botY2),
-      basePaint..color = basePaint.color.withValues(alpha: 1.0),
+      basePaint..color = basePaint.color.withOpacity( 1.0),
     );
   }
 
@@ -987,8 +987,8 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: accent.withValues(alpha: 0.15),
-                border: Border.all(color: accent.withValues(alpha: 0.3)),
+                color: accent.withOpacity( 0.15),
+                border: Border.all(color: accent.withOpacity( 0.3)),
               ),
               child: Icon(Icons.fingerprint, size: 44, color: accent),
             ),
@@ -1048,12 +1048,12 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
             const SizedBox(height: 20),
             Row(
               children: [
-                Expanded(child: Divider(color: t2.withValues(alpha: 0.3))),
+                Expanded(child: Divider(color: t2.withOpacity( 0.3))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text('ou', style: TextStyle(fontSize: 11, color: t2)),
                 ),
-                Expanded(child: Divider(color: t2.withValues(alpha: 0.3))),
+                Expanded(child: Divider(color: t2.withOpacity( 0.3))),
               ],
             ),
             const SizedBox(height: 16),
@@ -1062,9 +1062,9 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.15),
+                  color: accent.withOpacity( 0.15),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: accent.withValues(alpha: 0.3)),
+                  border: Border.all(color: accent.withOpacity( 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

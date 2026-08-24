@@ -25,12 +25,12 @@ class GlassTheme {
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                  color: Colors.black.withOpacity( isDark ? 0.4 : 0.08),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  color: Colors.black.withOpacity( isDark ? 0.2 : 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -82,7 +82,7 @@ class GlassTheme {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+            color: Colors.black.withOpacity( isDark ? 0.3 : 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -112,12 +112,12 @@ class GlassTheme {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
               color: isPrimary
-                  ? accent.withValues(alpha: 0.9)
+                  ? accent.withOpacity( 0.9)
                   : _glassColor(isDark, 0.15),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
                 color: isPrimary
-                    ? accent.withValues(alpha: 0.5)
+                    ? accent.withOpacity( 0.5)
                     : _glassBorder(isDark),
                 width: 1,
               ),
@@ -146,12 +146,12 @@ class GlassTheme {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? accent.withValues(alpha: 0.15)
+              ? accent.withOpacity( 0.15)
               : _glassColor(isDark, 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive
-                ? accent.withValues(alpha: 0.4)
+                ? accent.withOpacity( 0.4)
                 : _glassBorder(isDark),
           ),
         ),
@@ -282,13 +282,13 @@ class GlassTheme {
   // ─── Helpers ───────────────────────────────────────
   static Color _glassColor(bool isDark, double opacity) {
     return isDark
-        ? Colors.white.withValues(alpha: opacity)
-        : Colors.white.withValues(alpha: opacity * 1.5);
+        ? Colors.white.withOpacity( opacity)
+        : Colors.white.withOpacity( opacity * 1.5);
   }
 
   static Color _glassBorder(bool isDark) {
     return isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.06);
+        ? Colors.white.withOpacity( 0.12)
+        : Colors.black.withOpacity( 0.06);
   }
 }

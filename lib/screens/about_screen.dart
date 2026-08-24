@@ -45,7 +45,7 @@ class AboutScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: bg1.withValues(alpha: isDark ? 0.5 : 0.6),
+                  color: bg1.withOpacity( isDark ? 0.5 : 0.6),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: border),
                 ),
@@ -104,7 +104,7 @@ class AboutScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: bg1.withValues(alpha: isDark ? 0.5 : 0.6),
+                  color: bg1.withOpacity( isDark ? 0.5 : 0.6),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: border),
                 ),

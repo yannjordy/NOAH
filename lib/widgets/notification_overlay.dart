@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/notification_stream.dart';
 
+typedef AppNotification = NotificationEvent;
+
 class NotificationOverlay extends StatefulWidget {
   final Widget child;
   const NotificationOverlay({super.key, required this.child});
@@ -88,7 +90,7 @@ class _NotificationOverlayState extends State<NotificationOverlay>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity( 0.15),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),

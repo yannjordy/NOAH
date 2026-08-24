@@ -101,7 +101,7 @@ class OrderBook extends StatelessWidget {
               alignment: isBid ? Alignment.centerLeft : Alignment.centerRight,
               child: FractionallySizedBox(
                 widthFactor: pct.clamp(0.0, 1.0),
-                child: Container(color: color.withValues(alpha: 0.12)),
+                child: Container(color: color.withOpacity( 0.12)),
               ),
             ),
           ),
@@ -115,11 +115,11 @@ class OrderBook extends StatelessWidget {
                 )),
                 Expanded(flex: 2, child: Text(
                   vol.toStringAsFixed(4),
-                  style: TextStyle(fontSize: 9, color: color.withValues(alpha: 0.8), fontFamily: 'JetBrains Mono'),
+                  style: TextStyle(fontSize: 9, color: color.withOpacity( 0.8), fontFamily: 'JetBrains Mono'),
                 )),
                 Expanded(flex: 2, child: Text(
                   total.toStringAsFixed(2),
-                  style: TextStyle(fontSize: 9, color: color.withValues(alpha: 0.6), fontFamily: 'JetBrains Mono'),
+                  style: TextStyle(fontSize: 9, color: color.withOpacity( 0.6), fontFamily: 'JetBrains Mono'),
                 )),
               ],
             ),

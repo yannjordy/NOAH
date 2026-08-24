@@ -222,7 +222,7 @@ class _LoginModalState extends State<LoginModal> {
               border: Border.all(color: border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withOpacity( 0.3),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
                 ),
@@ -518,10 +518,10 @@ class _LoginModalState extends State<LoginModal> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE07060).withValues(alpha: 0.12),
+                      color: const Color(0xFFE07060).withOpacity( 0.12),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFE07060).withValues(alpha: 0.3),
+                        color: const Color(0xFFE07060).withOpacity( 0.3),
                       ),
                     ),
                     child: Text(
@@ -638,7 +638,7 @@ class _LoginModalState extends State<LoginModal> {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [accent, accent.withValues(alpha: 0.8)],
+            colors: [accent, accent.withOpacity( 0.8)],
           ),
           borderRadius: BorderRadius.circular(14),
         ),

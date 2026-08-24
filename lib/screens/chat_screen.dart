@@ -142,12 +142,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: widget.chat.currentModel == e.value
-                        ? accent.withValues(alpha: 0.15)
+                        ? accent.withOpacity( 0.15)
                         : bg2,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: widget.chat.currentModel == e.value
-                          ? accent.withValues(alpha: 0.3)
+                          ? accent.withOpacity( 0.3)
                           : borderMd,
                     ),
                   ),
@@ -311,11 +311,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: bg1.withValues(alpha: 0.5),
+                                  color: bg1.withOpacity( 0.5),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: hasModels
-                                        ? accent.withValues(alpha: 0.2)
+                                        ? accent.withOpacity( 0.2)
                                         : borderMd,
                                   ),
                                 ),
@@ -330,7 +330,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         fontSize: 10,
                                         fontWeight: FontWeight.w500,
                                         color: hasModels
-                                            ? accent.withValues(alpha: 0.7)
+                                            ? accent.withOpacity( 0.7)
                                             : t2,
                                       ),
                                     ),
@@ -339,7 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       Icons.arrow_drop_down,
                                       size: 14,
                                       color: hasModels
-                                          ? accent.withValues(alpha: 0.5)
+                                          ? accent.withOpacity( 0.5)
                                           : t2,
                                     ),
                                   ],
@@ -480,8 +480,8 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              accent.withValues(alpha: 0.15),
-              accent.withValues(alpha: 0.05),
+              accent.withOpacity( 0.15),
+              accent.withOpacity( 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -490,7 +490,7 @@ class _ChatScreenState extends State<ChatScreen> {
           border: Border.all(color: accentBorder),
           boxShadow: [
             BoxShadow(
-              color: accent.withValues(alpha: 0.15),
+              color: accent.withOpacity( 0.15),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -535,7 +535,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [accent, accent.withValues(alpha: 0.8)],
+                          colors: [accent, accent.withOpacity( 0.8)],
                         ),
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -616,14 +616,14 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              green.withValues(alpha: 0.12),
-              green.withValues(alpha: 0.03),
+              green.withOpacity( 0.12),
+              green.withOpacity( 0.03),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: green.withValues(alpha: 0.2)),
+          border: Border.all(color: green.withOpacity( 0.2)),
         ),
         child: Row(
           children: [
@@ -635,7 +635,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: green.withValues(alpha: 0.5),
+                    color: green.withOpacity( 0.5),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -674,15 +674,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFFFFE0E0).withValues(alpha: 0.1)
-                      : const Color(0xFFFFE0E0).withValues(alpha: 0.3),
+                      ? const Color(0xFFFFE0E0).withOpacity( 0.1)
+                      : const Color(0xFFFFE0E0).withOpacity( 0.3),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color:
                         (isDark
                                 ? const Color(0xFFE07060)
                                 : const Color(0xFFB8453A))
-                            .withValues(alpha: 0.3),
+                            .withOpacity( 0.3),
                   ),
                 ),
                 child: Row(
@@ -761,7 +761,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(
                   3,
-                  (i) => _dot(i, accent.withValues(alpha: 0.6)),
+                  (i) => _dot(i, accent.withOpacity( 0.6)),
                 ),
               ),
             ),
@@ -843,7 +843,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 padding: const EdgeInsets.all(20),
                                 child: Icon(
                                   Icons.broken_image,
-                                  color: Colors.white.withValues(alpha: 0.7),
+                                  color: Colors.white.withOpacity( 0.7),
                                   size: 32,
                                 ),
                               ),
@@ -936,10 +936,10 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: isNoah
-            ? LinearGradient(colors: [accent, accent.withValues(alpha: 0.7)])
-            : LinearGradient(colors: [bg3, bg3.withValues(alpha: 0.8)]),
+            ? LinearGradient(colors: [accent, accent.withOpacity( 0.7)])
+            : LinearGradient(colors: [bg3, bg3.withOpacity( 0.8)]),
         border: Border.all(
-          color: isNoah ? accentBorder : bg3.withValues(alpha: 0.5),
+          color: isNoah ? accentBorder : bg3.withOpacity( 0.5),
         ),
       ),
       child: Center(
@@ -985,9 +985,9 @@ class _ChatScreenState extends State<ChatScreen> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withOpacity( 0.15),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity( 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
