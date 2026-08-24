@@ -1,4 +1,4 @@
-name: noah_trading_app
+name: noah_app
 description: NOAH - Neural Operator for Autonomous Holdings
 publish_to: 'none'
 version: 1.0.0+1
@@ -11,15 +11,10 @@ dependencies:
     sdk: flutter
   crypto: ^3.0.3
   dio: ^5.4.0
-  flutter_foreground_task: ^6.1.0
-  home_widget: ^0.4.1
-  image_picker: ^1.0.7
   local_auth: ^2.1.8
   path_provider: ^2.1.2
   shared_preferences: ^2.2.2
   speech_to_text: ^6.6.0
-  supabase_flutter: ^2.3.0
-  url_launcher: ^6.2.4
   uuid: ^4.3.3
   web_socket_channel: ^2.4.0
 

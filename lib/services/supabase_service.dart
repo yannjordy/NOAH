@@ -1,63 +1,110 @@
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import '../models/models.dart';
 
 class SupabaseService {
   static const _url = 'https://dimnepbasmswqmexlhvs.supabase.co';
   static const _anonKey = 'sb_publishable_LzS7Y7L3vjno6yS54w1LkA_KAAxdeBO';
 
-  sb.SupabaseClient get client => sb.Supabase.instance.client;
+  late final Dio _dio;
+  String? _accessToken;
+  String? _refreshToken;
+  String? _userEmail;
 
   Future<void> init() async {
-    await sb.Supabase.initialize(url: _url, anonKey: _anonKey);
+    _dio = Dio(BaseOptions(
+      baseUrl: _url,
+      headers: {
+        'apikey': _anonKey,
+        'Content-Type': 'application/json',
+      },
+      validateStatus: (_) => true,
+    ));
   }
 
-  bool get isLoggedIn => client.auth.currentUser != null;
-  String? get userEmail => client.auth.currentUser?.email;
+  bool get isLoggedIn => _accessToken != null;
+  String? get userEmail => _userEmail;
+
+  Map<String, String> get _authHeaders => {
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+  };
 
   Future<bool> signUp(String email, String password, String name) async {
     try {
-      final res = await client.auth.signUp(email: email, password: password, data: {'name': name});
-      if (res.session != null) return true;
-      // Email confirmation required — try to sign in anyway (some Supabase configs auto-confirm)
-      try {
-        await client.auth.signInWithPassword(email: email, password: password);
-        return client.auth.currentUser != null;
-      } catch (_) {
-        // Email not confirmed yet — return true so app can create local account
+      final res = await _dio.post('/auth/v1/signup', data: {
+        'email': email,
+        'password': password,
+        'data': {'name': name},
+      });
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        _extractSession(res.data);
         return true;
       }
-    } catch (e) {
-      // If signup fails (e.g. user already exists), try sign in
+      // Try sign in if user already exists
+      return await signIn(email, password);
+    } catch (_) {
       try {
-        await client.auth.signInWithPassword(email: email, password: password);
-        return client.auth.currentUser != null;
-      } catch (_) {
+        return await signIn(email, password);
+      } catch (e) {
         rethrow;
       }
     }
   }
 
   Future<void> signInWithPassword(String email, String password) async {
-    await client.auth.signInWithPassword(email: email, password: password);
+    await signIn(email, password);
   }
 
   Future<void> signIn(String email, String password) async {
-    await client.auth.signInWithPassword(email: email, password: password);
+    final res = await _dio.post('/auth/v1/token?grant_type=password', data: {
+      'email': email,
+      'password': password,
+    });
+    if (res.statusCode == 200) {
+      _extractSession(res.data);
+    } else {
+      throw Exception(res.data['msg'] ?? 'Login failed');
+    }
   }
 
   Future<void> sendOtp(String email) async {
-    await client.auth.signInWithOtp(email: email);
+    await _dio.post('/auth/v1/otp', data: {'email': email});
   }
 
-  Stream<sb.AuthState> get onAuthChange => client.auth.onAuthStateChange;
+  Stream<Map<String, dynamic>> get onAuthChange async* {
+    // Simplified auth state stream
+    if (_accessToken != null) {
+      yield {'event': 'SIGNED_IN', 'session': {'access_token': _accessToken}};
+    }
+  }
 
   Future<void> verifyOtp(String email, String token) async {
-    await client.auth.verifyOTP(email: email, token: token, type: sb.OtpType.email);
+    final res = await _dio.post('/auth/v1/verify', data: {
+      'email': email,
+      'token': token,
+      'type': 'magiclink',
+    });
+    if (res.statusCode == 200) {
+      _extractSession(res.data);
+    }
   }
 
   Future<void> signOut() async {
-    await client.auth.signOut();
+    if (_accessToken != null) {
+      await _dio.post('/auth/v1/logout', options: Options(headers: _authHeaders));
+    }
+    _accessToken = null;
+    _refreshToken = null;
+    _userEmail = null;
   }
+
+  void _extractSession(Map<String, dynamic> data) {
+    _accessToken = data['access_token'];
+    _refreshToken = data['refresh_token'];
+    _userEmail = data['user']?['email'];
+  }
+
+  // --- Database operations via REST API ---
 
   Future<void> upsertProfile(String email, String name, String passwordHash,
       {bool? termsAccepted, bool? isDemo}) async {
@@ -68,29 +115,28 @@ class SupabaseService {
     };
     if (termsAccepted != null) data['terms_accepted'] = termsAccepted;
     if (isDemo != null) data['is_demo'] = isDemo;
-    await client.from('profiles').upsert(data, onConflict: 'email');
+    await _restUpsert('profiles', data, 'email');
   }
 
   Future<Map<String, dynamic>?> getProfile(String email) async {
-    final res = await client.from('profiles').select().eq('email', email).maybeSingle();
-    return res;
+    return await _restSelect('profiles', 'email=eq.$email');
   }
 
   Future<void> saveWallet(String email, double usdt, double initialUsdt, double totalDeposits) async {
-    await client.from('wallet').upsert({
+    await _restUpsert('wallet', {
       'user_email': email,
       'usdt': usdt,
       'initial_usdt': initialUsdt,
       'total_deposits': totalDeposits,
-    }, onConflict: 'user_email');
+    }, 'user_email');
   }
 
   Future<Map<String, dynamic>?> getWallet(String email) async {
-    return client.from('wallet').select().eq('user_email', email).maybeSingle();
+    return await _restSelect('wallet', 'user_email=eq.$email');
   }
 
   Future<void> savePositions(String email, List<Position> positions) async {
-    await client.from('positions').delete().eq('user_email', email);
+    await _restDelete('positions', 'user_email=eq.$email');
     if (positions.isEmpty) return;
     final rows = positions.map((p) => {
       'user_email': email,
@@ -100,79 +146,65 @@ class SupabaseService {
       'stop_loss': p.stopLoss,
       'take_profit': p.takeProfit,
     }).toList();
-    await client.from('positions').insert(rows);
+    await _restInsert('positions', rows);
   }
 
   Future<List<Map<String, dynamic>>> getPositions(String email) async {
-    final res = await client.from('positions').select().eq('user_email', email);
-    return res;
+    return await _restSelectList('positions', 'user_email=eq.$email');
   }
 
   Future<void> addTrade(String email, TradeOrder trade) async {
-    await client.from('trade_history').insert({
+    await _restInsert('trade_history', [{
       'user_email': email,
       'side': trade.side,
       'symbol': trade.sym,
       'qty': trade.qty,
       'price': trade.price,
       'pnl': trade.pnl,
-    });
+    }]);
   }
 
   Future<List<Map<String, dynamic>>> getTradeHistory(String email, {int limit = 100}) async {
-    final res = await client.from('trade_history')
-        .select()
-        .eq('user_email', email)
-        .order('time', ascending: false)
-        .limit(limit);
-    return res;
+    return await _restSelectList('trade_history',
+        'user_email=eq.$email&order=time.desc&limit=$limit');
   }
 
   Future<void> addWalletTransaction(String email, WalletTransaction tx) async {
-    await client.from('wallet_transactions').insert({
+    await _restInsert('wallet_transactions', [{
       'user_email': email,
       'type': tx.type,
       'amount': tx.amount,
       'label': tx.label,
-    });
+    }]);
   }
 
   Future<List<Map<String, dynamic>>> getWalletTransactions(String email) async {
-    final res = await client.from('wallet_transactions')
-        .select()
-        .eq('user_email', email)
-        .order('created_at', ascending: false);
-    return res;
+    return await _restSelectList('wallet_transactions',
+        'user_email=eq.$email&order=created_at.desc');
   }
 
   Future<void> saveApiConnection(String email, String model, String apiKey, String apiUrl) async {
-    await client.from('api_connections').upsert({
+    await _restUpsert('api_connections', {
       'user_email': email,
       'model_name': model,
       'api_key_encrypted': apiKey,
       'api_url': apiUrl,
       'is_active': true,
-    }, onConflict: 'user_email,model_name');
+    }, 'user_email,model_name');
   }
 
   Future<List<Map<String, dynamic>>> getApiConnections(String email) async {
-    final res = await client.from('api_connections')
-        .select()
-        .eq('user_email', email)
-        .eq('is_active', true);
-    return res;
+    return await _restSelectList('api_connections',
+        'user_email=eq.$email&is_active=eq.true');
   }
 
   Future<void> deleteApiConnection(String email, String model) async {
-    await client.from('api_connections')
-        .delete()
-        .eq('user_email', email)
-        .eq('model_name', model);
+    await _restDelete('api_connections', 'user_email=eq.$email&model_name=eq.$model');
   }
 
   Future<bool> isBanned(String email) async {
     try {
-      final res = await client.from('profiles').select('banned').eq('email', email).maybeSingle();
+      final res = await _restSelect('profiles', 'email=eq.$email&select=banned');
       return res?['banned'] == true;
     } catch (_) {
       return false;
@@ -181,7 +213,7 @@ class SupabaseService {
 
   Future<String?> getMinVersion() async {
     try {
-      final res = await client.from('app_config').select('value').eq('key', 'min_version').maybeSingle();
+      final res = await _restSelect('app_config', 'key=eq.min_version&select=value');
       return res?['value'] as String?;
     } catch (_) {
       return null;
@@ -189,23 +221,60 @@ class SupabaseService {
   }
 
   Future<void> saveChatSessions(String email, List<ChatSession> sessions) async {
-    await client.from('chat_sessions').delete().eq('user_email', email);
+    await _restDelete('chat_sessions', 'user_email=eq.$email');
     if (sessions.isEmpty) return;
     final rows = sessions.map((s) => {
-      'id': s.id,
       'user_email': email,
+      'id': s.id,
       'title': s.title,
       'date': s.date,
       'msgs_json': s.toJson()['msgs'],
     }).toList();
-    await client.from('chat_sessions').insert(rows);
+    await _restInsert('chat_sessions', rows);
   }
 
   Future<List<Map<String, dynamic>>> getChatSessions(String email) async {
-    final res = await client.from('chat_sessions')
-        .select()
-        .eq('user_email', email)
-        .order('date', ascending: false);
-    return res;
+    return await _restSelectList('chat_sessions',
+        'user_email=eq.$email&order=date.desc');
+  }
+
+  // --- REST helpers ---
+
+  Future<Map<String, dynamic>?> _restSelect(String table, String query) async {
+    final res = await _dio.get('/rest/v1/$table?$query',
+        options: Options(headers: {..._authHeaders, 'Prefer': 'return=representation'}));
+    if (res.statusCode == 200 && res.data is List && res.data.isNotEmpty) {
+      return res.data[0];
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> _restSelectList(String table, String query) async {
+    final res = await _dio.get('/rest/v1/$table?$query',
+        options: Options(headers: {..._authHeaders, 'Prefer': 'return=representation'}));
+    if (res.statusCode == 200 && res.data is List) {
+      return List<Map<String, dynamic>>.from(res.data);
+    }
+    return [];
+  }
+
+  Future<void> _restInsert(String table, List<Map<String, dynamic>> data) async {
+    await _dio.post('/rest/v1/$table',
+        data: data.length == 1 ? data[0] : data,
+        options: Options(headers: {..._authHeaders, 'Prefer': 'return=minimal'}));
+  }
+
+  Future<void> _restUpsert(String table, Map<String, dynamic> data, String onConflict) async {
+    await _dio.post('/rest/v1/$table',
+        data: data,
+        options: Options(headers: {
+          ..._authHeaders,
+          'Prefer': 'return=minimal,resolution=merge-duplicates',
+        }));
+  }
+
+  Future<void> _restDelete(String table, String query) async {
+    await _dio.delete('/rest/v1/$table?$query',
+        options: Options(headers: _authHeaders));
   }
 }
