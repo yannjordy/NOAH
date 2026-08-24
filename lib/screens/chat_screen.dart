@@ -518,8 +518,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           })),
                         if (parsed.isNotEmpty) ...[
                           if (m.blocks.isNotEmpty) const SizedBox(height: 10),
-                          SelectableText(
-                            parsed,
+                          SelectableText.rich(
+                            TextSpan(children: _buildMarkdownSpans(parsed, t0, t2, accent)),
                             style: TextStyle(
                               fontSize: 13.5,
                               height: 1.55,
@@ -595,8 +595,93 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _parseText(String text) {
     return text
-        .replaceAll('**', '')
         .replaceAll(RegExp(r'SIGNAL\s*:\s*(BUY|SELL|HOLD)\|[\w]+\|[\d.]+'), '');
+  }
+
+  List<TextSpan> _buildMarkdownSpans(String text, Color t0, Color t2, Color accent) {
+    final spans = <TextSpan>[];
+    final lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (i > 0) spans.add(const TextSpan(text: '\n'));
+
+      // Code block
+      if (line.startsWith('```')) {
+        continue; // skip fence lines
+      }
+      // Inline code
+      if (line.contains('`') && !line.startsWith('```')) {
+        final parts = line.split('`');
+        for (var j = 0; j < parts.length; j++) {
+          if (j % 2 == 0) {
+            spans.addAll(_parseInlineMarkdown(parts[j], t0, t2, accent));
+          } else {
+            spans.add(TextSpan(text: parts[j], style: TextStyle(
+              fontFamily: 'JetBrainsMono', fontSize: 12, color: accent,
+              backgroundColor: t2.withValues(alpha: 0.15),
+            )));
+          }
+        }
+        continue;
+      }
+      // List items
+      if (line.startsWith(RegExp(r'^[\s]*[-*•]\s'))) {
+        final content = line.replaceFirst(RegExp(r'^[\s]*[-*•]\s'), '');
+        spans.add(TextSpan(text: '• ', style: TextStyle(color: accent, fontWeight: FontWeight.w700)));
+        spans.addAll(_parseInlineMarkdown(content, t0, t2, accent));
+        continue;
+      }
+      // Numbered list
+      final numMatch = RegExp(r'^(\d+[\.\)]\s)').firstMatch(line);
+      if (numMatch != null) {
+        final content = line.substring(numMatch.end);
+        spans.add(TextSpan(text: '${numMatch.group(1)}', style: TextStyle(color: accent, fontWeight: FontWeight.w700)));
+        spans.addAll(_parseInlineMarkdown(content, t0, t2, accent));
+        continue;
+      }
+      // Headers
+      if (line.startsWith('### ')) {
+        spans.add(TextSpan(text: line.substring(4), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: t0)));
+        continue;
+      }
+      if (line.startsWith('## ')) {
+        spans.add(TextSpan(text: line.substring(3), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: t0)));
+        continue;
+      }
+      if (line.startsWith('# ')) {
+        spans.add(TextSpan(text: line.substring(2), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: t0)));
+        continue;
+      }
+      // Default line
+      spans.addAll(_parseInlineMarkdown(line, t0, t2, accent));
+    }
+    return spans;
+  }
+
+  List<TextSpan> _parseInlineMarkdown(String text, Color t0, Color t2, Color accent) {
+    final spans = <TextSpan>[];
+    final regex = RegExp(r'(\*\*(.+?)\*\*)|(_(.+?)_)|(\*(.+?)\*)');
+    var lastEnd = 0;
+    for (final match in regex.allMatches(text)) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+      if (match.group(2) != null) {
+        // **bold**
+        spans.add(TextSpan(text: match.group(2), style: TextStyle(fontWeight: FontWeight.w700, color: t0)));
+      } else if (match.group(4) != null) {
+        // _italic_
+        spans.add(TextSpan(text: match.group(4), style: TextStyle(fontStyle: FontStyle.italic, color: t0)));
+      } else if (match.group(6) != null) {
+        // *italic*
+        spans.add(TextSpan(text: match.group(6), style: TextStyle(fontStyle: FontStyle.italic, color: t0)));
+      }
+      lastEnd = match.end;
+    }
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+    return spans.isEmpty ? [TextSpan(text: text)] : spans;
   }
 
   Widget _avatar(bool isNoah, bool isUser, Color accent, Color accentBg, Color accentBorder, Color bg3, Color t0) {

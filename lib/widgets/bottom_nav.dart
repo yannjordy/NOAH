@@ -23,17 +23,16 @@ class NoahBottomNav extends StatelessWidget {
 
     return ClipRRect(
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
         child: Container(
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0x1A1E1E1E)
-                : const Color(0x1AFFFFFF),
+                ? Color.fromRGBO(18, 18, 18, 0.88)
+                : Color.fromRGBO(247, 244, 238, 0.90),
             border: Border(
               top: BorderSide(
-                color: isDark
-                    ? const Color(0x22FFFFFF)
-                    : const Color(0x22000000),
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                width: 0.5,
               ),
             ),
           ),

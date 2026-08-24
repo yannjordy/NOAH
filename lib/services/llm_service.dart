@@ -39,12 +39,19 @@ class LlmService {
     }
   }
 
-  Future<String> sendMessage(String text, {String? systemContext}) async {
+  Future<String> sendMessage(String text, {String? systemContext, List<String>? images}) async {
     if (_apiKey.isEmpty) {
       return '❌ Clé API non configurée. Allez dans Connexions pour ajouter votre clé.';
     }
     try {
-      final messages = <Map<String, String>>[
+      final userContent = <Map<String, dynamic>>[
+        {'type': 'text', 'text': text},
+        if (images != null)
+          for (final img in images)
+            {'type': 'image_url', 'image_url': {'url': img.startsWith('http') ? img : 'data:image/jpeg;base64,$img'}},
+      ];
+
+      final messages = <Map<String, dynamic>>[
         if (systemContext != null && systemContext.isNotEmpty)
           {'role': 'system', 'content': systemContext}
         else
@@ -54,7 +61,7 @@ class LlmService {
                 'Tu aides les utilisateurs à comprendre les marchés crypto, les risques, et les stratégies. '
                 'Réponds en français, sois concis et professionnel.'
           },
-        {'role': 'user', 'content': text},
+        {'role': 'user', 'content': userContent.length == 1 ? text : userContent},
       ];
       final resp = await _dio.post('/chat/completions', data: {
         'model': _model,

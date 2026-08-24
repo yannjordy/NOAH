@@ -226,6 +226,70 @@ class BinanceService {
     );
   }
 
+  /// Place a stop-loss order (STOP_LOSS_LIMIT) after a buy
+  Future<BinanceOrderResult?> placeStopLoss(String symbol, String side, double quantity, double stopPrice) async {
+    try {
+      final resp = await _signedPost('/api/v3/order', params: {
+        'symbol': '${symbol}USDT',
+        'side': side.toUpperCase(),
+        'type': 'STOP_LOSS_LIMIT',
+        'timeInForce': 'GTC',
+        'quantity': quantity.toStringAsFixed(6),
+        'price': (stopPrice * 0.99).toStringAsFixed(2),
+        'stopPrice': stopPrice.toStringAsFixed(2),
+      });
+      if (resp['status'] == 'REJECTED' || resp['status'] == 'EXPIRED') {
+        throw Exception('SL order rejected: ${resp['msg'] ?? resp['status']}');
+      }
+      return BinanceOrderResult(
+        symbol: resp['symbol'] ?? symbol,
+        side: resp['side'] ?? side,
+        executedQty: double.tryParse(resp['executedQty']?.toString() ?? '0') ?? 0,
+        cummulativeQuoteQty: double.tryParse(resp['cummulativeQuoteQty']?.toString() ?? '0') ?? 0,
+        status: resp['status'] ?? 'UNKNOWN',
+        orderId: resp['orderId'] ?? 0,
+      );
+    } on Exception catch (e) {
+      // Propagate Binance API errors so caller can surface them
+      if (e.toString().contains('Erreur Binance') || e.toString().contains('rejected') || e.toString().contains('insufficient')) {
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  /// Place a take-profit order (TAKE_PROFIT_LIMIT) after a buy
+  Future<BinanceOrderResult?> placeTakeProfit(String symbol, String side, double quantity, double stopPrice) async {
+    try {
+      final resp = await _signedPost('/api/v3/order', params: {
+        'symbol': '${symbol}USDT',
+        'side': side.toUpperCase(),
+        'type': 'TAKE_PROFIT_LIMIT',
+        'timeInForce': 'GTC',
+        'quantity': quantity.toStringAsFixed(6),
+        'price': (stopPrice * 1.01).toStringAsFixed(2),
+        'stopPrice': stopPrice.toStringAsFixed(2),
+      });
+      if (resp['status'] == 'REJECTED' || resp['status'] == 'EXPIRED') {
+        throw Exception('TP order rejected: ${resp['msg'] ?? resp['status']}');
+      }
+      return BinanceOrderResult(
+        symbol: resp['symbol'] ?? symbol,
+        side: resp['side'] ?? side,
+        executedQty: double.tryParse(resp['executedQty']?.toString() ?? '0') ?? 0,
+        cummulativeQuoteQty: double.tryParse(resp['cummulativeQuoteQty']?.toString() ?? '0') ?? 0,
+        status: resp['status'] ?? 'UNKNOWN',
+        orderId: resp['orderId'] ?? 0,
+      );
+    } on Exception catch (e) {
+      if (e.toString().contains('Erreur Binance') || e.toString().contains('rejected') || e.toString().contains('insufficient')) {
+        return null;
+      }
+      rethrow;
+    }
+    }
+  }
+
   Future<List<BinanceOpenOrder>> getOpenOrders({String? symbol}) async {
     final params = <String, dynamic>{};
     if (symbol != null) params['symbol'] = '${symbol}USDT';

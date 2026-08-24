@@ -23,7 +23,7 @@ class _FrostedButton extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(size / 2),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: GestureDetector(
           onTap: onTap,
           child: Container(
@@ -31,8 +31,22 @@ class _FrostedButton extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF2A2A2A).withValues(alpha: 0.85),
-              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFF3A3A3A).withValues(alpha: 0.3)),
+              color: isDark
+                  ? Color.fromRGBO(255, 255, 255, 0.08)
+                  : Color.fromRGBO(0, 0, 0, 0.06),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+              gradient: RadialGradient(
+                center: Alignment.topCenter,
+                radius: 1.2,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 1.0],
+              ),
             ),
             child: child,
           ),
@@ -275,9 +289,30 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                         duration: const Duration(milliseconds: 300),
                         padding: const EdgeInsets.only(left: 4, right: 4, top: 6, bottom: 6),
                         decoration: BoxDecoration(
-                          color: (isDark ? const Color(0xFF1E1E1E) : Colors.white).withValues(alpha: 0.85),
+                          color: isDark
+                              ? Color.fromRGBO(30, 30, 30, 0.85)
+                              : Color.fromRGBO(255, 255, 255, 0.85),
                           borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                          border: Border.all(
+                            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                            width: 0.5,
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.3],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: AnimatedBuilder(
                           animation: _cancelCtrl,
@@ -442,13 +477,13 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
 
   Widget _chip(String label, IconData icon, Color accent, VoidCallback onTap) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final chipBg = isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFF2A2A2A).withValues(alpha: 0.85);
-    final chipBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF3A3A3A).withValues(alpha: 0.3);
-    final chipText = isDark ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8);
+    final chipBg = isDark ? Color.fromRGBO(255, 255, 255, 0.06) : Color.fromRGBO(0, 0, 0, 0.05);
+    final chipBorder = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06);
+    final chipText = isDark ? Colors.white.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.7);
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: GestureDetector(
           onTap: onTap,
           child: Container(
@@ -457,7 +492,16 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
             decoration: BoxDecoration(
               color: chipBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: chipBorder),
+              border: Border.all(color: chipBorder, width: 0.5),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -479,13 +523,30 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
           child: Container(
             decoration: BoxDecoration(
-              color: (isDark ? const Color(0xFF1E1E1E) : Colors.white).withValues(alpha: 0.85),
-              border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+              color: isDark
+                  ? Color.fromRGBO(30, 30, 30, 0.90)
+                  : Color.fromRGBO(255, 255, 255, 0.90),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                  width: 0.5,
+                ),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
             ),
             child: SafeArea(
               top: false,
@@ -536,9 +597,38 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     Navigator.pop(ctx);
     try {
       final result = await pickNativeFile();
-      if (result != null) {
-        widget.chat.sendMessage('📎 ${result.name}');
+      if (result == null) return;
+
+      // Image — send as vision
+      if (result.mime.startsWith('image/')) {
+        final b64 = base64Encode(result.bytes);
+        widget.chat.sendImageMessage(b64);
+        return;
       }
+
+      // Text-based files — read content and send to AI
+      final textMimes = ['text/', 'application/json', 'application/csv', 'application/xml'];
+      final isText = textMimes.any((m) => result.mime.startsWith(m)) ||
+          result.name.endsWith('.txt') || result.name.endsWith('.json') ||
+          result.name.endsWith('.csv') || result.name.endsWith('.xml') ||
+          result.name.endsWith('.md') || result.name.endsWith('.log') ||
+          result.name.endsWith('.dart') || result.name.endsWith('.py') ||
+          result.name.endsWith('.js') || result.name.endsWith('.ts');
+
+      if (isText) {
+        try {
+          final text = utf8.decode(result.bytes);
+          final preview = text.length > 3000 ? '${text.substring(0, 3000)}\n\n... (tronqué, ${text.length} caractères)' : text;
+          widget.chat.sendMessage('📄 Contenu de ${result.name}:\n\n$preview');
+        } catch (_) {
+          widget.chat.sendMessage('📎 ${result.name} (${result.bytes.length} bytes) — impossible de lire le contenu');
+        }
+        return;
+      }
+
+      // Other files — send info
+      final sizeKb = (result.bytes.length / 1024).toStringAsFixed(1);
+      widget.chat.sendMessage('📎 ${result.name} ($sizeKb KB, ${result.mime})');
     } catch (_) {}
   }
 }

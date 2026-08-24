@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../providers/providers.dart';
@@ -115,7 +116,6 @@ class RiskScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _sectionLine(bg3),
             _toggleRow('Auto-trading', 'Exécution automatique des signaux', risk.autoTrade, (v) => risk.setAutoTrade(v), accent, bg3, t0, t2),
-            _toggleRow('Circuit Breaker', "Arrêt d'urgence si perte > limite", risk.circuitBreaker, (v) => risk.setCircuitBreaker(v), accent, bg3, t0, t2),
           ]),
           const SizedBox(height: 10),
           // Lock button
@@ -199,27 +199,46 @@ class RiskScreen extends StatelessWidget {
   }
 
   Widget _section(String title, Color bg1, Color border, Color accent, Color t2, bool isDark, List<Widget> children) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg1,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: border),
-        boxShadow: NoahTheme.shadow(isDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Color.fromRGBO(255, 255, 255, 0.06)
+                : Color.fromRGBO(0, 0, 0, 0.04),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+              width: 0.5,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.3],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
+              Row(
+                children: [
+                  Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(width: 8),
+                  Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...children,
             ],
           ),
-          const SizedBox(height: 8),
-          ...children,
-        ],
+        ),
       ),
     );
   }

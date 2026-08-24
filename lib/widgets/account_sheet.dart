@@ -46,24 +46,35 @@ class AccountSheet extends StatelessWidget {
       transform: isOpen ? Matrix4.identity() : Matrix4.translationValues(0, 500, 0),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -4))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40, offset: const Offset(0, -4)),
+          BoxShadow(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          filter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
           child: Container(
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0x331E1E1E)
-                  : const Color(0x33FFFFFF),
+                  ? Color.fromRGBO(30, 30, 30, 0.90)
+                  : Color.fromRGBO(255, 255, 255, 0.90),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
               border: Border(
                 top: BorderSide(
-                  color: isDark
-                      ? const Color(0x22FFFFFF)
-                      : const Color(0x22000000),
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                  width: 0.5,
                 ),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
               ),
             ),
             child: SafeArea(

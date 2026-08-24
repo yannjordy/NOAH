@@ -6,11 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
-import '../services/deerflow_service.dart';
-import '../services/trading_api_service.dart';
-import '../services/llm_service.dart';
+import '../services/binance_service.dart';
+import '../services/market_service.dart';
 import '../services/opencode_service.dart';
+import '../services/llm_service.dart';
+import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
+import '../services/trade_journal_service.dart';
 import '../services/notification_service.dart';
 import '../services/supabase_service.dart';
 import '../services/ai_tools.dart';
@@ -77,10 +80,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _restore() {
-    // Set default admin password if none exists
-    if (!_storage.hasAdminPassword()) {
-      _storage.setAdminPassword('1234');
-    }
+    // Admin password must be set by user during setup — no default backdoor
+    // If no admin password exists, login modal will prompt user to create one
     final email = _storage.getLoggedEmail();
     if (email != null) {
       final users = _storage.getUsers();
@@ -213,16 +214,25 @@ class AuthProvider extends ChangeNotifier {
       if (!isAvailable) return false;
 
       final didAuthenticate = await localAuth.authenticate(
-        localizedReason: 'Authentifiez-vous en tant qu\'admin',
+        localizedReason: 'Authentifiez-vous',
         options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
       );
 
       if (didAuthenticate) {
-        _currentUser = UserAccount(email: 'admin@noah.local', password: '', name: 'Admin');
-        _isLoggedIn = true;
-        _storage.setLoggedEmail('admin@noah.local');
-        notifyListeners();
-        return true;
+        // Restore the last logged-in user, don't create a fake admin
+        final email = _storage.getLoggedEmail();
+        if (email != null) {
+          final users = _storage.getUsers();
+          final user = users.where((u) => u.email == email).firstOrNull;
+          if (user != null) {
+            _currentUser = user;
+            _isLoggedIn = true;
+            notifyListeners();
+            return true;
+          }
+        }
+        // No previous user — biometric login not possible without prior login
+        return false;
       }
       return false;
     } catch (_) {
@@ -273,6 +283,15 @@ class SettingsProvider extends ChangeNotifier {
     _useBold = _storage.getBold();
     _profitOnlyThreshold = _storage.getProfitThreshold();
     _profileIcon = _normalizeIconPath(_storage.getProfileIcon());
+    // Load AI config
+    _defaultModel = _storage.getDefaultModel();
+    _responseMode = _storage.getResponseMode();
+    // Load notification settings
+    _notifyTrades = _storage.getNotifyTrades();
+    _notifySignals = _storage.getNotifySignals();
+    _notifyRisk = _storage.getNotifyRisk();
+    _notifyVibrate = _storage.getNotifyVibrate();
+    _notifySound = _storage.getNotifySound();
   }
 
   static const _validFonts = ['Inter', 'PlayfairDisplay', 'JetBrainsMono'];
@@ -312,16 +331,17 @@ class SettingsProvider extends ChangeNotifier {
 
   void setNotifyTrades(bool v) {
     _notifyTrades = v;
+    _storage.setNotifyTrades(v);
     NotificationService.suppressTradeNotifications = !v;
     notifyListeners();
   }
-  void setNotifySignals(bool v) { _notifySignals = v; notifyListeners(); }
-  void setNotifyRisk(bool v) { _notifyRisk = v; notifyListeners(); }
-  void setNotifyVibrate(bool v) { _notifyVibrate = v; notifyListeners(); }
-  void setNotifySound(bool v) { _notifySound = v; notifyListeners(); }
+  void setNotifySignals(bool v) { _notifySignals = v; _storage.setNotifySignals(v); notifyListeners(); }
+  void setNotifyRisk(bool v) { _notifyRisk = v; _storage.setNotifyRisk(v); notifyListeners(); }
+  void setNotifyVibrate(bool v) { _notifyVibrate = v; _storage.setNotifyVibrate(v); notifyListeners(); }
+  void setNotifySound(bool v) { _notifySound = v; _storage.setNotifySound(v); notifyListeners(); }
   void setProfitThreshold(double v) { _profitOnlyThreshold = v; _storage.setProfitThreshold(v); notifyListeners(); }
-  void setDefaultModel(String v) { _defaultModel = v; notifyListeners(); }
-  void setResponseMode(String v) { _responseMode = v; notifyListeners(); }
+  void setDefaultModel(String v) { _defaultModel = v; _storage.setDefaultModel(v); notifyListeners(); }
+  void setResponseMode(String v) { _responseMode = v; _storage.setResponseMode(v); notifyListeners(); }
   void setFontFamily(String v) { _fontFamily = v; _storage.setFont(v); notifyListeners(); }
   void setUseBold(bool v) { _useBold = v; _storage.setBold(v); notifyListeners(); }
   void setProfileIcon(String icon) { _profileIcon = _normalizeIconPath(icon); _storage.setProfileIcon(icon); notifyListeners(); }
@@ -357,6 +377,9 @@ class ChatProvider extends ChangeNotifier {
   final TradingApiService _tradingApi;
   final LlmService _llm;
   final OpenCodeService _openCode;
+  final TradeJournalService _journal = TradeJournalService();
+
+  TradeJournalService get journal => _journal;
 
   OpenCodeService get openCode => _openCode;
 
@@ -405,6 +428,9 @@ class ChatProvider extends ChangeNotifier {
       _connectedModels['NOAH Trading Core'] = 'trading-core';
     }
     _restoreBinance();
+    // Load trade journal from storage
+    _journal.loadFromJson(_storage.getTradeJournal());
+    _journal.loadMemory(_storage.getEvolvedMemory());
     // Set OpenCode as the brain for the main trading agent
     _mainAgent.setBrain((prompt, {String? systemContext}) {
       return _openCode.sendMessage(prompt, systemContext: systemContext);
@@ -787,7 +813,7 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
       exposure: exposure,
       circuitBreaker: riskReport.details['circuitBreaker'] as bool? ?? r.circuitBreaker,
       riskLevel: riskReport.details['riskLevel'] as String? ?? r.statusLabel,
-      signals: signals,
+      signals: generateSignals(),
       isDemo: _storage.getDemoMode(),
     ));
 
@@ -859,6 +885,20 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
     buf.writeln('');
     buf.writeln('## Mémoire des Techniques de Trading');
     buf.writeln(_storage.getAgentMemory());
+
+    // Inject trade journal performance into AI context
+    final journalPerf = _journal.generatePerformanceSummary();
+    if (journalPerf.isNotEmpty && _journal.entries.isNotEmpty) {
+      buf.writeln('');
+      buf.writeln(journalPerf);
+    }
+
+    // Inject evolved memory (lessons learned from past trades)
+    if (_journal.evolvedMemory.isNotEmpty) {
+      buf.writeln('');
+      buf.writeln('## Leçons apprises des trades précédents');
+      buf.writeln(_journal.evolvedMemory);
+    }
 
     return buf.toString();
   }
@@ -938,6 +978,20 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
     final isDemo = _storage.getDemoMode();
     final useBinance = !isDemo && _binance.isConnected && _binanceWorking;
 
+    // Record trade open in journal
+    final currentPrice = prices[symbol] ?? 0;
+    _journal.recordTradeOpen(
+      symbol: symbol,
+      side: side.toUpperCase(),
+      entryPrice: currentPrice,
+      quantity: qty,
+      signalType: action['signal'] as String? ?? 'AI_DECISION',
+      signalConfidence: (action['confidence'] as num?)?.toDouble() ?? 0.5,
+      marketRegime: action['regime'] as String?,
+      reason: action['reason'] as String?,
+    );
+    _persistJournal();
+
     if (useBinance) {
       return _executeRealTrade(side, symbol, qty, sl, tp);
     }
@@ -958,8 +1012,37 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
         return;
       }
       _portfolio!.executeTrade(side, filledQty, symbol: symbol, stopLoss: sl, takeProfit: tp);
+
+      // Place SL/TP orders on Binance
+      final oppositeSide = side.toLowerCase() == 'buy' ? 'sell' : 'buy';
+      if (sl != null && sl > 0) {
+        _binance.placeStopLoss(symbol, oppositeSide, filledQty, sl).then((slResult) {
+          if (slResult != null) {
+            _lastTradingAction = '✅ $side $filledQty $symbol @ \$${fillPrice.toStringAsFixed(2)} — SL posé sur Binance @ \$${sl.toStringAsFixed(2)}';
+          } else {
+            _lastTradingAction = '✅ $side $filledQty $symbol @ \$${fillPrice.toStringAsFixed(2)} — SL locally only (Binance rejected)';
+          }
+          notifyListeners();
+        });
+      }
+      if (tp != null && tp > 0) {
+        _binance.placeTakeProfit(symbol, oppositeSide, filledQty, tp).then((tpResult) {
+          if (tpResult != null) {
+            _lastTradingAction = '✅ $side $filledQty $symbol @ \$${fillPrice.toStringAsFixed(2)} — TP posé sur Binance @ \$${tp.toStringAsFixed(2)}';
+          }
+          notifyListeners();
+        });
+      }
+
+      if (sl == null && tp == null) {
+        _lastTradingAction = '✅ ${side.toUpperCase()} $filledQty $symbol exécuté sur Binance @ \$${fillPrice.toStringAsFixed(2)}';
+      } else {
+        final parts = <String>['✅ ${side.toUpperCase()} $filledQty $symbol @ \$${fillPrice.toStringAsFixed(2)}'];
+        if (sl != null) parts.add('SL: \$${sl.toStringAsFixed(2)}');
+        if (tp != null) parts.add('TP: \$${tp.toStringAsFixed(2)}');
+        _lastTradingAction = parts.join(' — ');
+      }
       NotificationService.onTradeExecuted(symbol, side, filledQty, fillPrice);
-      _lastTradingAction = '✅ ${side.toUpperCase()} $filledQty $symbol exécuté sur Binance @ \$${fillPrice.toStringAsFixed(2)}${sl != null ? ' (SL: \$${sl.toStringAsFixed(2)})' : ''}${tp != null ? ' (TP: \$${tp.toStringAsFixed(2)})' : ''}';
       notifyListeners();
     }).catchError((e) {
       _lastTradingAction = '❌ Erreur Binance: $e';
@@ -1023,6 +1106,103 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
     session.date = DateTime.now().millisecondsSinceEpoch;
     _storage.saveSessions(sessions);
   }
+
+  // ═══════════════════════════════════════════════════════
+  //  TRADE JOURNAL — NOAH's learning memory
+  // ═══════════════════════════════════════════════════════
+
+  void _persistJournal() {
+    _storage.setTradeJournal(_journal.toJson());
+    _storage.setEvolvedMemory(_journal.memoryToJson());
+  }
+
+  /// Called when a trade is closed (by SL, TP, or manual close)
+  void recordTradeClose(String symbol, double exitPrice, double pnl) {
+    final closed = _journal.closeTrade(
+      symbol: symbol,
+      exitPrice: exitPrice,
+      pnl: pnl,
+      exitTime: DateTime.now(),
+    );
+    if (closed != null) {
+      _persistJournal();
+      // Trigger async LLM post-trade analysis
+      _analyzeTradeWithLLM(closed);
+    }
+  }
+
+  /// Analyze a closed trade with LLM and update agent memory
+  Future<void> _analyzeTradeWithLLM(TradeJournalEntry trade) async {
+    if (_currentModel == 'noah-agent') return; // No LLM available
+    if (trade.pnl == null) return;
+
+    final perfSummary = _journal.generatePerformanceSummary();
+    final prompt = '''
+Tu es NOAH, un trader IA qui apprend de ses trades.
+
+## Trade fermé
+${trade.toAnalysisPrompt()}
+
+## Historique de performance
+$perfSummary
+
+## Ta mission
+Analyse ce trade et réponds UNIQUEMENT avec un JSON:
+{
+  "lesson": "Une leçon courte et concrète apprise de ce trade (max 50 mots)",
+  "adjustment": "Un ajustement concret à apporter aux futures trades (optionnel)"
+}
+
+Sois spécifique: pourquoi ce trade a gagné ou perdu, et que faire différemment.
+''';
+
+    try {
+      final reply = await _llm.sendMessage(prompt);
+      // Parse LLM response
+      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(reply);
+      if (jsonMatch != null) {
+        final data = jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
+        final lesson = data['lesson'] as String?;
+        if (lesson != null && lesson.isNotEmpty) {
+          _journal.addLesson(trade.id, lesson);
+        }
+        final adjustment = data['adjustment'] as String?;
+        if (adjustment != null && adjustment.isNotEmpty) {
+          _updateEvolvedMemory(trade, lesson, adjustment);
+        }
+        _persistJournal();
+      }
+    } catch (_) {}
+  }
+
+  /// Update evolved memory based on trade analysis
+  void _updateEvolvedMemory(TradeJournalEntry trade, String? lesson, String? adjustment) {
+    final currentMemory = _journal.evolvedMemory;
+    final buf = StringBuffer();
+
+    if (currentMemory.isNotEmpty) {
+      buf.writeln(currentMemory);
+      buf.writeln('');
+    }
+
+    buf.writeln('--- Trade ${trade.symbol} ${trade.side} (${trade.outcome}) ---');
+    if (lesson != null) buf.writeln('Leçon: $lesson');
+    if (adjustment != null) buf.writeln('Ajustement: $adjustment');
+    buf.writeln('Date: ${DateTime.now().toString().substring(0, 16)}');
+    buf.writeln('');
+
+    // Keep only last 50 entries to avoid bloat
+    final lines = buf.toString().split('\n');
+    if (lines.length > 200) {
+      buf.clear();
+      buf.write(lines.sublist(lines.length - 200).join('\n'));
+    }
+
+    _journal.updateEvolvedMemory(buf.toString());
+  }
+
+  /// Get performance summary for AI context
+  String getJournalPerformanceSummary() => _journal.generatePerformanceSummary();
 
   void sendMessage(String text) {
     if (text.trim().isEmpty || _isTyping) return;
@@ -1216,12 +1396,30 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
     _messages.add(ChatMessage(id: typingId, role: 'noah', text: '', isTyping: true));
     notifyListeners();
 
-    Future.delayed(const Duration(milliseconds: 800), () {
+    final prompt = 'Analyse cette image et donne-moi tes impressions sur son contenu.';
+    if (_currentModel != 'noah-agent') {
+      final ctx = _buildSystemContext();
+      final images = [imageBase64];
+      final Future<String> replyFuture;
+      if (_currentModel.startsWith('opencode/')) {
+        replyFuture = _openCode.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null, images: images);
+      } else {
+        replyFuture = _llm.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null, images: images);
+      }
+      replyFuture.then((reply) {
+        final parsed = AITools.parseResponse(reply);
+        _finishResponse(typingId, parsed.cleanText, blocks: parsed.blocks.isNotEmpty ? parsed.blocks : null);
+      });
+      return;
+    }
+
+    // NOAH multi-agent fallback
+    Future.delayed(Duration(milliseconds: 800 + Random().nextInt(600)), () {
       _messages.removeWhere((m) => m.id == typingId);
       final noahMsg = ChatMessage(
         id: _uuid.v4(),
         role: 'noah',
-        text: 'Image reçue. Que souhaitez-vous analyser ?',
+        text: 'Image reçue. Passe en mode GPT-4o ou Claude pour l\'analyse vision.',
       );
       _messages.add(noahMsg);
       _isTyping = false;
@@ -1254,11 +1452,12 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
 
     if (_currentModel != 'noah-agent') {
       final ctx = _buildSystemContext();
+      final images = [imageBase64];
       final Future<String> replyFuture;
       if (_currentModel.startsWith('opencode/')) {
-        replyFuture = _openCode.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null);
+        replyFuture = _openCode.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null, images: images);
       } else {
-        replyFuture = _llm.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null);
+        replyFuture = _llm.sendMessage(prompt, systemContext: ctx.isNotEmpty ? ctx : null, images: images);
       }
       replyFuture.then((reply) {
         final parsed = AITools.parseResponse(reply);
@@ -1341,6 +1540,7 @@ class PortfolioProvider extends ChangeNotifier {
   PerformanceAnalyzer? _analyzer;
   double _dailyLoss = 0;
   bool _circuitBreakerActive = false;
+  void Function(String symbol, double exitPrice, double pnl)? _onTradeClosed;
 
   PortfolioData get data => _data;
   String get currentSymbol => _currentSymbol;
@@ -1355,6 +1555,9 @@ class PortfolioProvider extends ChangeNotifier {
     _data = s.loadPortfolio();
     _rebuildRisk();
     notifyListeners();
+  }
+  void setOnTradeClosed(void Function(String symbol, double exitPrice, double pnl)? cb) {
+    _onTradeClosed = cb;
   }
 
   void _rebuildRisk() {
@@ -1392,15 +1595,26 @@ class PortfolioProvider extends ChangeNotifier {
   Future<void> _syncToSupabase() async {
     if (_supabase == null) return;
     final email = _supabase!.userEmail ?? 'user';
+    // Each call independent — failure in one doesn't block others
     try {
       await _supabase!.saveWallet(email, _data.usdt, _data.initialUsdt, _data.totalDeposits);
+    } catch (e) {
+      print('[Portfolio] sync wallet error: $e');
+    }
+    try {
       await _supabase!.savePositions(email, _data.positions);
+    } catch (e) {
+      print('[Portfolio] sync positions error: $e');
+    }
+    try {
       if (_data.history.isNotEmpty) {
         for (final t in _data.history.take(20)) {
           await _supabase!.addTrade(email, t);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[Portfolio] sync trades error: $e');
+    }
   }
 
   void _syncBgt() {
@@ -1529,7 +1743,12 @@ class PortfolioProvider extends ChangeNotifier {
       sellPnl = (p - pos.entry) * qty;
       _trackDailyPnl(sellPnl);
       pos.qty -= qty;
-      if (pos.qty < 0.00001) _data.positions.remove(pos);
+      final wasClosed = pos.qty < 0.00001;
+      if (wasClosed) _data.positions.remove(pos);
+      // Notify journal when position is fully closed
+      if (wasClosed && _onTradeClosed != null) {
+        _onTradeClosed!(sym, p, sellPnl);
+      }
     }
     _data.history.insert(0, TradeOrder(side: side, sym: sym, qty: qty, price: p, pnl: sellPnl));
     updatePeakCapital();
@@ -1604,6 +1823,11 @@ class RiskProvider extends ChangeNotifier {
   PortfolioProvider? _portfolio;
   StorageService? _storage;
 
+  RiskProvider({StorageService? storage}) {
+    _storage = storage;
+    if (_storage != null) _loadRisk();
+  }
+
   void attachStorage(StorageService s) {
     _storage = s;
     _loadRisk();
@@ -1664,9 +1888,20 @@ class RiskProvider extends ChangeNotifier {
 }
 
 // ─── Trade Signals ──────────────────────────────────
-final signals = [
-  Signal(type: 'BUY', sym: 'BTC', conf: 0.81),
-  Signal(type: 'HOLD', sym: 'ETH', conf: 0.73),
-  Signal(type: 'SELL', sym: 'SOL', conf: 0.68),
-];
+/// Generate signals dynamically from current market data
+List<Signal> generateSignals() {
+  final result = <Signal>[];
+  for (final sym in symbols) {
+    final pct = pcts[sym];
+    if (pct == null) continue;
+    if (pct > 2.0) {
+      result.add(Signal(type: 'BUY', sym: sym, conf: (pct / 10).clamp(0.5, 0.95)));
+    } else if (pct < -2.0) {
+      result.add(Signal(type: 'SELL', sym: sym, conf: (pct.abs() / 10).clamp(0.5, 0.95)));
+    } else {
+      result.add(Signal(type: 'HOLD', sym: sym, conf: 0.5));
+    }
+  }
+  return result;
+}
 

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/providers.dart';
 import '../services/market_service.dart';
 import '../services/cache_service.dart';
@@ -18,6 +20,7 @@ class SettingsScreen extends StatefulWidget {
   final CacheService cache;
   final StorageService storage;
   final void Function(int) openLogin;
+  final VoidCallback? onLock;
 
   const SettingsScreen({
     super.key,
@@ -28,6 +31,7 @@ class SettingsScreen extends StatefulWidget {
     required this.cache,
     required this.storage,
     required this.openLogin,
+    this.onLock,
   });
 
   @override
@@ -133,6 +137,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _adminPasswordRow(widget.storage, accent, bg2, borderMd, t0, t2),
                 const SizedBox(height: 12),
                 _manualLockRow(accent, bg2, borderMd, t0, t2),
+                const SizedBox(height: 12),
+                _logoutRow(context, accent, bg2, borderMd, t0, t2),
               ],
             ),
           ),
@@ -177,20 +183,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _section(String title, Color bg1, Color border, Color accent, Color t2, bool isDark, List<Widget> children) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg1,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: border),
-        boxShadow: NoahTheme.shadow(isDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(title, accent, t2),
-          const SizedBox(height: 8),
-          ...children,
-        ],
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Color.fromRGBO(255, 255, 255, 0.06)
+                  : Color.fromRGBO(0, 0, 0, 0.04),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                width: 0.5,
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader(title, accent, t2),
+                const SizedBox(height: 8),
+                ...children,
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -698,11 +732,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _openBatterySettings(BuildContext context) {
+  void _openBatterySettings(BuildContext context) async {
     if (Platform.isAndroid) {
       try {
-        const channel = MethodChannel('noah/battery_settings');
-        channel.invokeMethod('openBatterySettings');
+        final uri = Uri.parse('package:com.noahtrading.app');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          final intent = Uri.parse('intent:#Intent;action=android.settings.IGNORE_BATTERY_OPTIMIZATIONS;package=com.noahtrading.app;end');
+          if (await canLaunchUrl(intent)) {
+            await launchUrl(intent);
+          }
+        }
       } catch (_) {}
     }
   }
@@ -922,15 +963,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           GestureDetector(
             onTap: () {
-              // Lock the app - this will be handled by a callback
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Application verrouillée'),
-                  backgroundColor: const Color(0xFF4CAF8E),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              );
+              if (widget.onLock != null) {
+                widget.onLock!();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Application verrouillée'),
+                    backgroundColor: const Color(0xFF4CAF8E),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+              }
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -950,6 +994,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _logoutRow(BuildContext context, Color accent, Color bg2, Color borderMd, Color t0, Color t2) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Se déconnecter'),
+              content: const Text('Voulez-vous vraiment vous déconnecter ? Les données locales seront conservées.'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Annuler', style: TextStyle(color: t2))),
+                TextButton(
+                  onPressed: () {
+                    widget.auth.logout();
+                    Navigator.pop(ctx);
+                    widget.openLogin(0);
+                  },
+                  child: const Text('Déconnecter', style: TextStyle(color: Color(0xFFE07060))),
+                ),
+              ],
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: bg2,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderMd),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.logout, size: 14, color: const Color(0xFFE07060)),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Se déconnecter', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: t0))),
+              Icon(Icons.chevron_right, size: 16, color: t2),
+            ],
+          ),
+        ),
       ),
     );
   }

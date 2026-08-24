@@ -43,7 +43,11 @@ class StorageService {
         final dir = await getApplicationDocumentsDirectory();
         final file = File('${dir.path}/noah_store.json');
         await file.writeAsString(jsonEncode(_store));
-      } catch (_) {}
+      } catch (e) {
+        // Log error but don't crash — data may be lost on restart
+        // ignore: avoid_print
+        print('[StorageService] _persist error: $e');
+      }
     }
   }
 
@@ -228,6 +232,45 @@ class StorageService {
     _store[_profileIconKey] = icon;
     _persist();
   }
+
+  // ═══════════════════════════════════════════════════════
+  //  TRADE JOURNAL (NOAH's learning memory)
+  // ═══════════════════════════════════════════════════════
+  String? getTradeJournal() => _store['noah_trade_journal'];
+  void setTradeJournal(String v) { _store['noah_trade_journal'] = v; _persist(); }
+
+  String? getEvolvedMemory() => _store['noah_evolved_memory'];
+  void setEvolvedMemory(String v) { _store['noah_evolved_memory'] = v; _persist(); }
+
+  String? getStrategyPerformance() => _store['noah_strategy_perf'];
+  void setStrategyPerformance(String v) { _store['noah_strategy_perf'] = v; _persist(); }
+
+  // ═══════════════════════════════════════════════════════
+  //  SETTINGS — AI Config
+  // ═══════════════════════════════════════════════════════
+  String getDefaultModel() => _store['noah_default_model'] ?? 'DeepSeek';
+  void setDefaultModel(String v) { _store['noah_default_model'] = v; _persist(); }
+
+  String getResponseMode() => _store['noah_response_mode'] ?? 'Précis';
+  void setResponseMode(String v) { _store['noah_response_mode'] = v; _persist(); }
+
+  // ═══════════════════════════════════════════════════════
+  //  SETTINGS — Notifications
+  // ═══════════════════════════════════════════════════════
+  bool getNotifyTrades() => _store['noah_notify_trades'] != 'false';
+  void setNotifyTrades(bool v) { _store['noah_notify_trades'] = v.toString(); _persist(); }
+
+  bool getNotifySignals() => _store['noah_notify_signals'] != 'false';
+  void setNotifySignals(bool v) { _store['noah_notify_signals'] = v.toString(); _persist(); }
+
+  bool getNotifyRisk() => _store['noah_notify_risk'] != 'false';
+  void setNotifyRisk(bool v) { _store['noah_notify_risk'] = v.toString(); _persist(); }
+
+  bool getNotifyVibrate() => _store['noah_notify_vibrate'] != 'false';
+  void setNotifyVibrate(bool v) { _store['noah_notify_vibrate'] = v.toString(); _persist(); }
+
+  bool getNotifySound() => _store['noah_notify_sound'] != 'false';
+  void setNotifySound(bool v) { _store['noah_notify_sound'] = v.toString(); _persist(); }
 }
 
 const _fontKey = 'noah_font';

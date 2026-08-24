@@ -147,15 +147,20 @@ class OpenCodeService {
     return _sessionId!;
   }
 
-  Future<String> sendMessage(String text, {String? systemContext}) async {
+  Future<String> sendMessage(String text, {String? systemContext, List<String>? images}) async {
     try {
       final sessionId = await _ensureSession();
 
-      final parts = <Map<String, String>>[];
+      final parts = <Map<String, dynamic>>[];
       if (systemContext != null && systemContext.isNotEmpty) {
         parts.add({'type': 'text', 'text': '$systemContext\n\n$text'});
       } else {
         parts.add({'type': 'text', 'text': text});
+      }
+      if (images != null) {
+        for (final img in images) {
+          parts.add({'type': 'image_url', 'image_url': {'url': img.startsWith('http') ? img : 'data:image/jpeg;base64,$img'}});
+        }
       }
 
       final body = <String, dynamic>{

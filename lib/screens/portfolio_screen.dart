@@ -6,8 +6,9 @@ import '../theme/noah_theme.dart';
 
 class PortfolioScreen extends StatelessWidget {
   final PortfolioProvider portfolio;
+  final bool isDemo;
 
-  const PortfolioScreen({super.key, required this.portfolio});
+  const PortfolioScreen({super.key, required this.portfolio, this.isDemo = true});
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +41,30 @@ class PortfolioScreen extends StatelessWidget {
     final isPnlUp = pnl >= 0;
     final isPortUp = portPnlPct >= 0;
 
+    // Build sparkline data from portfolio history
+    final sparkPts = <double>[];
+    var bal = data.initialUsdt > 0 ? data.initialUsdt : 10000.0;
+    sparkPts.add(bal);
+    for (final t in data.walletHistory) {
+      if (t.type == 'deposit') bal += t.amount;
+      else bal -= t.amount;
+      sparkPts.add(bal);
+    }
+    for (final t in data.history) {
+      if (t.side == 'sell') bal += t.qty * t.price;
+      else if (t.side == 'buy') bal -= t.qty * t.price;
+      sparkPts.add(bal);
+    }
+    if (sparkPts.length < 3) {
+      // Generate directional curve based on actual PnL
+      final startVal = totalVal - pnl;
+      sparkPts.clear();
+      for (int i = 0; i < 30; i++) {
+        final frac = i / 29;
+        sparkPts.add(startVal + pnl * frac);
+      }
+    }
+
     final colors = [accent, isDark ? const Color(0xFFD4A84B) : const Color(0xFFA67C2E), green, red, t3];
     final segs = <({String label, double val, Color c})>[];
     for (int i = 0; i < data.positions.length; i++) {
@@ -70,7 +95,9 @@ class PortfolioScreen extends StatelessWidget {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        'Portefeuille fictif — Les montants sont virtuels, les résultats basés sur des données de marché réelles.',
+                        isDemo
+                            ? 'Portefeuille fictif — Les montants sont virtuels, les résultats basés sur des données de marché réelles.'
+                            : 'Portefeuille réel — Trading connecté à Binance. Les pertes sont réelles.',
                         style: TextStyle(fontSize: 9, color: amber, height: 1.3),
                       ),
                     ),
@@ -140,14 +167,15 @@ class PortfolioScreen extends StatelessWidget {
                       height: 44,
                       child: CustomPaint(
                         size: Size.infinite,
-                        painter: _SparklinePainter(totalVal: totalVal, isUp: isPnlUp, isDark: isDark, color: isPnlUp ? green : red),
+                        painter: _SparklinePainter(dataPoints: sparkPts, isUp: isPnlUp, isDark: isDark, color: isPnlUp ? green : red),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
-              // Wallet actions
+              // Wallet actions — only in demo mode
+              if (isDemo)
               Row(
                 children: [
                   Expanded(
@@ -806,19 +834,21 @@ class PortfolioScreen extends StatelessWidget {
 }
 
 class _SparklinePainter extends CustomPainter {
-  final double totalVal;
+  final List<double> dataPoints;
   final bool isUp;
   final bool isDark;
   final Color color;
 
-  _SparklinePainter({required this.totalVal, required this.isUp, required this.isDark, required this.color});
+  _SparklinePainter({required this.dataPoints, required this.isUp, required this.isDark, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final vals = List.generate(30, (i) {
-      return totalVal * (0.94 + i / 30 * 0.08 + sin(i * 0.5) * 0.01);
-    });
-    vals[vals.length - 1] = totalVal;
+    final vals = dataPoints.length >= 3
+        ? dataPoints
+        : List.generate(30, (i) {
+            final trend = isUp ? 0.94 + i / 30 * 0.08 : 1.06 - i / 30 * 0.08;
+            return 10000 * trend;
+          });
     final mn = vals.reduce(min);
     final mx = vals.reduce(max);
     final rng = (mx - mn).clamp(0.01, double.infinity);
@@ -843,5 +873,5 @@ class _SparklinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SparklinePainter old) => old.totalVal != totalVal;
+  bool shouldRepaint(covariant _SparklinePainter old) => old.dataPoints != dataPoints;
 }

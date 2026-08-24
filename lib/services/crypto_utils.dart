@@ -19,12 +19,21 @@ class CryptoUtils {
       final encrypted = encrypter.encrypt(plainText, iv: iv);
       return base64.encode(iv.bytes + encrypted.bytes);
     } catch (_) {
-      return base64.encode(utf8.encode(plainText));
+      // Degraded mode: base64 only (NOT encrypted). Marked for detection.
+      return 'PLAIN:${base64.encode(utf8.encode(plainText))}';
     }
   }
 
   static String decrypt(String cipherText, {String userSeed = 'default'}) {
     if (cipherText.isEmpty) return cipherText;
+    // Detect degraded-mode plaintext
+    if (cipherText.startsWith('PLAIN:')) {
+      try {
+        return utf8.decode(base64.decode(cipherText.substring(6)));
+      } catch (_) {
+        return cipherText;
+      }
+    }
     try {
       final combined = base64.decode(cipherText);
       if (combined.length <= 16) return cipherText;

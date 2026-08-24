@@ -62,16 +62,30 @@ class HamburgerPanel extends StatelessWidget {
           bottomRight: Radius.circular(36),
         ),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
           child: Container(
             decoration: BoxDecoration(
-              color: glassBg,
+              color: isDark
+                  ? Color.fromRGBO(24, 24, 24, 0.92)
+                  : Color.fromRGBO(252, 250, 245, 0.92),
               borderRadius: const BorderRadius.only(
                 topRight: Radius.circular(36),
                 bottomRight: Radius.circular(36),
               ),
               border: Border(
-                right: BorderSide(color: glassBorder, width: 0.5),
+                right: BorderSide(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  width: 0.5,
+                ),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.5],
               ),
             ),
             child: Column(

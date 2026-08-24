@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../providers/providers.dart';
@@ -183,47 +184,85 @@ class _LoginModalState extends State<LoginModal> {
 
     final showCodeStep = _mode == _AuthMode.forgot && _resetEmail != null;
 
-    return Container(
-      width: 360,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: bg1,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 40, offset: const Offset(0, 8))],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(10)),
-                child: Center(child: Text('N', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white))),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+        child: Container(
+          width: 360,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Color.fromRGBO(30, 30, 30, 0.88)
+                : Color.fromRGBO(255, 255, 255, 0.88),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+              width: 0.5,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.3],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 40,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 10),
-              Text('NOAH', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: accent, letterSpacing: 2)),
-              const Spacer(),
-              GestureDetector(
-                onTap: widget.onClose,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(8)),
-                  child: Icon(Icons.close, size: 16, color: t2),
-                ),
+              BoxShadow(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(10)),
+                    child: Center(child: Text('N', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white))),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('NOAH', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: accent, letterSpacing: 2)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: widget.onClose,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Icon(Icons.close, size: 16, color: t2),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-          if (_mode == _AuthMode.login) ..._buildLogin(accent, bg2, t0, t2),
-          if (_mode == _AuthMode.register) ..._buildRegister(accent, bg2, t0, t2),
-          if (_mode == _AuthMode.forgot && !showCodeStep) ..._buildForgotEmail(accent, bg2, t0, t2),
-          if (_mode == _AuthMode.forgot && showCodeStep) ..._buildCodeStep(accent, bg2, t0, t2, border),
-          if (_mode == _AuthMode.admin) ..._buildAdmin(accent, bg2, t0, t2),
-          if (_mode == _AuthMode.adminSetup) ..._buildAdminSetup(accent, bg2, t0, t2),
-        ],
+              if (_mode == _AuthMode.login) ..._buildLogin(accent, bg2, t0, t2),
+              if (_mode == _AuthMode.register) ..._buildRegister(accent, bg2, t0, t2),
+              if (_mode == _AuthMode.forgot && !showCodeStep) ..._buildForgotEmail(accent, bg2, t0, t2),
+              if (_mode == _AuthMode.forgot && showCodeStep) ..._buildCodeStep(accent, bg2, t0, t2, border),
+              if (_mode == _AuthMode.admin) ..._buildAdmin(accent, bg2, t0, t2),
+              if (_mode == _AuthMode.adminSetup) ..._buildAdminSetup(accent, bg2, t0, t2),
+            ],
+          ),
+        ),
       ),
     );
   }

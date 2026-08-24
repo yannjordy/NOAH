@@ -695,7 +695,7 @@ class _TradeScreenState extends State<TradeScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        ...signals.map((s) {
+        ...generateSignals().map((s) {
           final sc = s.type == 'BUY' ? green : s.type == 'SELL' ? red : amber;
           final sBg = s.type == 'BUY' ? greenBg : s.type == 'SELL' ? redBg : amberBg;
           return Container(

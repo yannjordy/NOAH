@@ -83,15 +83,18 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     super.initState();
     _auth = AuthProvider(widget.storage);
     _auth.setSupabase(widget.supabase);
-    // Set default admin password if none exists
+    // Admin password must be set by user during setup — no default backdoor
     if (!_auth.hasAdminPassword()) {
-      _auth.setupAdminPassword('1234');
+      // Will prompt user to create one via login modal
     }
     _settings = SettingsProvider(widget.storage);
     _portfolio = PortfolioProvider();
     _portfolio.setSupabase(widget.supabase);
     _portfolio.setStorage(widget.storage);
-    _risk = RiskProvider();
+    _portfolio.setOnTradeClosed((symbol, exitPrice, pnl) {
+      _chat.recordTradeClose(symbol, exitPrice, pnl);
+    });
+    _risk = RiskProvider(storage: widget.storage);
     _market = MarketService();
     _chat = ChatProvider(widget.storage, _auth, buildContext: () {
       final pos = _portfolio.data.positions.map((p) => PositionSnapshot(
@@ -166,7 +169,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     WidgetService.init();
     _pushWidgetData();
     Timer.periodic(const Duration(seconds: 30), (_) => _pushWidgetData());
-    Timer.periodic(const Duration(seconds: 5), (_) => _runAgentCycle());
+    Timer.periodic(const Duration(seconds: 60), (_) => _runAgentCycle());
     WidgetsBinding.instance.addObserver(this);
     _authenticateBiometric();
   }
@@ -214,8 +217,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
   void _runAgentCycle() {
     final isOpenCode = _chat.currentModel.startsWith('opencode/');
-    final scanCooldown = isOpenCode ? const Duration(seconds: 30) : const Duration(seconds: 5);
-    const cooldown = Duration(seconds: 30);
+    final scanCooldown = isOpenCode ? const Duration(minutes: 5) : const Duration(minutes: 2);
+    const cooldown = Duration(minutes: 2);
 
     // Network stability check: skip trading if data is stale
     if (!isDataFresh(maxAgeSeconds: 30)) {
@@ -284,7 +287,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
 
     for (final sym in symbols) {
       final lastTrade = _lastTradeTime[sym];
-      if (lastTrade != null && DateTime.now().difference(lastTrade) < const Duration(seconds: 30)) continue;
+      if (lastTrade != null && DateTime.now().difference(lastTrade) < const Duration(minutes: 2)) continue;
 
       final ctx = _buildAgentContext(sym);
       final riskReport = RiskAgent().analyze(sym, ctx);
@@ -687,19 +690,27 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
     final c = C();
     return ClipRRect(
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
         child: Container(
           padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
           decoration: BoxDecoration(
             color: _settings.isDark
-                ? const Color(0x1A1E1E1E)
-                : const Color(0x1AFFFFFF),
+                ? Color.fromRGBO(13, 13, 13, 0.88)
+                : Color.fromRGBO(247, 244, 238, 0.90),
             border: Border(
               bottom: BorderSide(
-                color: _settings.isDark
-                    ? const Color(0x22FFFFFF)
-                    : const Color(0x22000000),
+                color: (_settings.isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                width: 0.5,
               ),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                (_settings.isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.3],
             ),
           ),
           child: SafeArea(
@@ -830,11 +841,11 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       case 3:
         return ConnectionsScreen(auth: _auth, chat: _chat, openLogin: _openLogin);
       case 4:
-        return PortfolioScreen(portfolio: _portfolio);
+        return PortfolioScreen(portfolio: _portfolio, isDemo: _storage.getDemoMode());
       case 5:
         return RiskScreen(risk: _risk, portfolio: _portfolio);
       case 6:
-        return SettingsScreen(settings: _settings, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin);
+        return SettingsScreen(settings: _settings, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin, onLock: _manualLock);
       case 7:
         return const AboutScreen();
       default:

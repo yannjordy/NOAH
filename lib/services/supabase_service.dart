@@ -1,13 +1,33 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../models/models.dart';
 
 class SupabaseService {
-  static const _url = 'https://dimnepbasmswqmexlhvs.supabase.co';
-  static const _anonKey = 'sb_publishable_LzS7Y7L3vjno6yS54w1LkA_KAAxdeBO';
+  static String _url = 'https://dimnepbasmswqmexlhvs.supabase.co';
+  static String _anonKey = 'sb_publishable_LzS7Y7L3vjno6yS54w1LkA_KAAxdeBO';
 
   sb.SupabaseClient get client => sb.Supabase.instance.client;
 
   Future<void> init() async {
+    // Try to load from .env file (for builds with injected secrets)
+    try {
+      final envFile = File('assets/.env');
+      if (await envFile.exists()) {
+        final content = await envFile.readAsString();
+        for (final line in content.split('\n')) {
+          final parts = line.split('=');
+          if (parts.length >= 2) {
+            final key = parts[0].trim();
+            final value = parts.sublist(1).join('=').trim();
+            if (key == 'SUPABASE_URL' && value.isNotEmpty) _url = value;
+            if (key == 'SUPABASE_ANON_KEY' && value.isNotEmpty) _anonKey = value;
+          }
+        }
+      }
+    } catch (_) {}
+
     await sb.Supabase.initialize(url: _url, anonKey: _anonKey);
   }
 
@@ -174,8 +194,13 @@ class SupabaseService {
     try {
       final res = await client.from('profiles').select('banned').eq('email', email).maybeSingle();
       return res?['banned'] == true;
-    } catch (_) {
-      return false;
+    } on Exception catch (e) {
+      // Network errors or missing table — don't ban on infrastructure failure
+      if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException') || e.toString().contains('relation') || e.toString().contains('does not exist')) {
+        return false;
+      }
+      // Unexpected error — rethrow to surface programming bugs
+      rethrow;
     }
   }
 

@@ -239,6 +239,125 @@ class TradeOrder {
   );
 }
 
+/// Structured trade journal entry — NOAH's learning memory
+class TradeJournalEntry {
+  final String id;
+  final String symbol;
+  final String side; // BUY or SELL
+  final double entryPrice;
+  final double? exitPrice;
+  final double quantity;
+  final double? pnl;
+  final double? pnlPct;
+  final String signalType; // RSI_OVERSOLD, TREND_FOLLOW, AI_DECISION, MANUAL, etc.
+  final double signalConfidence;
+  final String? marketRegime; // UPTREND, DOWNTREND, VOLATILE, RANGING
+  final String? reason; // Why the trade was taken
+  final String? outcome; // WIN, LOSS, BREAKEVEN
+  final String? lesson; // What NOAH learned from this trade
+  final DateTime entryTime;
+  final DateTime? exitTime;
+  final Map<String, dynamic>? metadata; // Extra context (RSI value, volume, etc.)
+
+  TradeJournalEntry({
+    required this.id,
+    required this.symbol,
+    required this.side,
+    required this.entryPrice,
+    this.exitPrice,
+    required this.quantity,
+    this.pnl,
+    this.pnlPct,
+    this.signalType = 'UNKNOWN',
+    this.signalConfidence = 0.5,
+    this.marketRegime,
+    this.reason,
+    this.outcome,
+    this.lesson,
+    required this.entryTime,
+    this.exitTime,
+    this.metadata,
+  });
+
+  /// Mark trade as closed with result
+  TradeJournalEntry close({required double exitPrice, required double pnl, required DateTime exitTime}) {
+    final pnlPct = entryPrice > 0 ? (pnl / (entryPrice * quantity)) * 100 : 0.0;
+    return TradeJournalEntry(
+      id: id,
+      symbol: symbol,
+      side: side,
+      entryPrice: entryPrice,
+      exitPrice: exitPrice,
+      quantity: quantity,
+      pnl: pnl,
+      pnlPct: pnlPct,
+      signalType: signalType,
+      signalConfidence: signalConfidence,
+      marketRegime: marketRegime,
+      reason: reason,
+      outcome: pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSS' : 'BREAKEVEN',
+      lesson: lesson,
+      entryTime: entryTime,
+      exitTime: exitTime,
+      metadata: metadata,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'symbol': symbol,
+    'side': side,
+    'entryPrice': entryPrice,
+    'exitPrice': exitPrice,
+    'quantity': quantity,
+    'pnl': pnl,
+    'pnlPct': pnlPct,
+    'signalType': signalType,
+    'signalConfidence': signalConfidence,
+    'marketRegime': marketRegime,
+    'reason': reason,
+    'outcome': outcome,
+    'lesson': lesson,
+    'entryTime': entryTime.toIso8601String(),
+    'exitTime': exitTime?.toIso8601String(),
+    'metadata': metadata,
+  };
+
+  factory TradeJournalEntry.fromJson(Map<String, dynamic> json) => TradeJournalEntry(
+    id: json['id'] as String,
+    symbol: json['symbol'] as String,
+    side: json['side'] as String,
+    entryPrice: (json['entryPrice'] as num).toDouble(),
+    exitPrice: (json['exitPrice'] as num?)?.toDouble(),
+    quantity: (json['quantity'] as num).toDouble(),
+    pnl: (json['pnl'] as num?)?.toDouble(),
+    pnlPct: (json['pnlPct'] as num?)?.toDouble(),
+    signalType: json['signalType'] as String? ?? 'UNKNOWN',
+    signalConfidence: (json['signalConfidence'] as num?)?.toDouble() ?? 0.5,
+    marketRegime: json['marketRegime'] as String?,
+    reason: json['reason'] as String?,
+    outcome: json['outcome'] as String?,
+    lesson: json['lesson'] as String?,
+    entryTime: DateTime.parse(json['entryTime'] as String),
+    exitTime: json['exitTime'] != null ? DateTime.parse(json['exitTime'] as String) : null,
+    metadata: json['metadata'] as Map<String, dynamic>?,
+  );
+
+  /// Generate a summary for LLM analysis
+  String toAnalysisPrompt() {
+    final buf = StringBuffer();
+    buf.writeln('Trade: $side $quantity $symbol');
+    buf.writeln('Entry: \$${entryPrice.toStringAsFixed(2)} → Exit: ${exitPrice != null ? "\$${exitPrice!.toStringAsFixed(2)}" : "ouvert"}');
+    buf.writeln('PnL: ${pnl != null ? "${pnl! >= 0 ? "+" : ""}\$${pnl!.toStringAsFixed(2)} (${pnlPct?.toStringAsFixed(1)}%)" : "en cours"}');
+    buf.writeln('Signal: $signalType (confiance: ${(signalConfidence * 100).toStringAsFixed(0)}%)');
+    buf.writeln('Régime: ${marketRegime ?? "inconnu"}');
+    if (reason != null) buf.writeln('Raison: $reason');
+    if (outcome != null) buf.writeln('Résultat: $outcome');
+    if (lesson != null) buf.writeln('Leçon: $lesson');
+    return buf.toString();
+  }
+}
+
 class WalletTransaction {
   final String type; // 'deposit', 'withdraw'
   final double amount;
