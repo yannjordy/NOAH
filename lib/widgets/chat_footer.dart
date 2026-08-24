@@ -4,10 +4,8 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../providers/providers.dart';
-import '../services/native_file_picker.dart';
 
 class _FrostedButton extends StatelessWidget {
   final double size;
@@ -238,4 +236,113 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                       const Spacer(),
                       GestureDetector(onTap: () => setState(() => _pendingImage = null), child: Icon(Icons.close, size: 14, color: t2)),
                     ],
-              
+                  ),
+                ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  _FrostedButton(
+                    size: 38,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: () => _sendQuick('Analyse BTC'),
+                    child: Icon(Icons.add, size: 18, color: accent),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFEAE6DC).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFD5D0C6)),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _ctrl,
+                              onChanged: (v) {
+                                final has = v.trim().isNotEmpty;
+                                if (has != _hasText) setState(() => _hasText = has);
+                              },
+                              style: TextStyle(fontSize: 13, color: t0),
+                              decoration: InputDecoration(
+                                hintText: _isListening ? 'Écoute...' : 'Demande à NOAH...',
+                                hintStyle: TextStyle(color: t2, fontSize: 12),
+                                border: InputBorder.none,
+                              ),
+                              onSubmitted: (_) => _send(),
+                            ),
+                          ),
+                          if (_ctrl.text.isNotEmpty)
+                            GestureDetector(
+                              onTap: _send,
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: accent,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.arrow_upward, size: 16, color: Colors.white),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _FrostedButton(
+                    size: 38,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: _toggleVoice,
+                    child: AnimatedBuilder(
+                      animation: _waveAnim,
+                      builder: (_, __) => Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        size: 18,
+                        color: _isListening
+                            ? Color.lerp(accent, const Color(0xFFE07060), _waveAnim.value)
+                            : t2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String label, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _sendQuick(String text) {
+    widget.chat.sendMessage(text);
+  }
+}

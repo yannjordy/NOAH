@@ -7,7 +7,7 @@ class NoahBottomNav extends StatelessWidget {
 
   const NoahBottomNav({super.key, required this.currentIndex, required this.onTap});
 
-  static const _items = [
+  static final _items = [
     ('CORE', Icons.dashboard_outlined),
     ('CHAT', Icons.chat_bubble_outline),
     ('TRADE', Icons.bar_chart_outlined),

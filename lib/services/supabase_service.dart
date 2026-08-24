@@ -55,13 +55,14 @@ class SupabaseService {
     await signIn(email, password);
   }
 
-  Future<void> signIn(String email, String password) async {
+  Future<bool> signIn(String email, String password) async {
     final res = await _dio.post('/auth/v1/token?grant_type=password', data: {
       'email': email,
       'password': password,
     });
     if (res.statusCode == 200) {
       _extractSession(res.data);
+      return true;
     } else {
       throw Exception(res.data['msg'] ?? 'Login failed');
     }

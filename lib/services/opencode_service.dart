@@ -67,7 +67,7 @@ class OpenCodeService {
     };
 
     if (_sessionId != null) {
-      body['session_id'] = _sessionId;
+      body['session_id'] = _sessionId!;
     }
 
     try {

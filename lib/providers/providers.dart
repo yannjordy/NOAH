@@ -19,7 +19,7 @@ import '../services/binance_service.dart';
 import '../agents/agents.dart' hide fmt;
 import '../agents/risk_manager.dart';
 
-const _uuid = Uuid();
+final _uuid = Uuid();
 
 // ─── Auth Provider ───────────────────────────────────
 class AuthProvider extends ChangeNotifier {
@@ -508,7 +508,7 @@ class ChatProvider extends ChangeNotifier {
     if (providerName == 'Binance API') {
       if (apiKey.isNotEmpty && secretKey.isNotEmpty) {
         _binance.configure(apiKey, secretKey);
-        _storage.saveBinanceCredentials(apiKey, secretKey);
+        _storage.saveBinanceCredentials(apiKey, secretKey, false);
         _binanceWorking = false;
       }
     } else if (providerName == 'OpenCode Local') {
@@ -701,7 +701,7 @@ Liquidité (Liquidité): spread ${liquidityReport.details['spread'] ?? 'N/A'}%, 
 Attribution: ${attributionReport.details['totalTrades'] ?? 0} trades historiques, meilleur ${attributionReport.details['bestSymbol'] ?? 'N/A'}
 
 Ta mémoire de trading (utilise ces techniques comme un trader expert, pas comme des règles automatiques) :
-${_storage.getAgentMemory()}
+${_storage.getAgentMemory('default')}
 
 Maintenant réfléchis comme un trader :
 1. Regarde les données. Est-ce que tu vois une VRAIE opportunité ou c'est du bruit ?
@@ -863,7 +863,7 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
 
     buf.writeln('');
     buf.writeln('## Mémoire des Techniques de Trading');
-    buf.writeln(_storage.getAgentMemory());
+    buf.writeln(_storage.getAgentMemory('default'));
 
     return buf.toString();
   }
@@ -891,10 +891,10 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
 
   /// Save a new technique to agent memory.
   void addAgentTechnique(String technique) {
-    final memory = _storage.getAgentMemory();
+    final memory = _storage.getAgentMemory('default');
     final lines = memory.split('\n');
     final newEntry = '\n${lines.length + 1}. $technique';
-    _storage.setAgentMemory('$memory$newEntry');
+    _storage.setAgentMemory('default', '$memory$newEntry');
   }
 
   /// Execute actions parsed from AI response.

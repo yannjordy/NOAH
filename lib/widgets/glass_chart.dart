@@ -10,12 +10,14 @@ class GlassChartWidget extends StatelessWidget {
   final String symbol;
   final MarketService market;
   final double height;
+  final void Function(String text, String? imageBase64)? onShareToChat;
 
   const GlassChartWidget({
     super.key,
     required this.symbol,
     required this.market,
     this.height = 280,
+    this.onShareToChat,
   });
 
   @override

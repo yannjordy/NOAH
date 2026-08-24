@@ -265,7 +265,7 @@ class HamburgerPanel extends StatelessWidget {
   }
 
   IconData _menuIcon(int index, Color color) {
-    const icons = [
+    final icons = [
       Icons.dashboard_outlined,
       Icons.chat_bubble_outline,
       Icons.bar_chart_outlined,

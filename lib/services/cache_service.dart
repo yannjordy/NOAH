@@ -1,3 +1,6 @@
+import 'storage_service.dart';
+
 class CacheService {
-  // Minimal cache service placeholder
+  final StorageService _storage;
+  CacheService(this._storage);
 }

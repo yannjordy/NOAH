@@ -847,7 +847,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       case 5:
         return RiskScreen(risk: _risk, portfolio: _portfolio);
       case 6:
-        return SettingsScreen(settings: _settings, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin);
+        return SettingsScreen(settings: _settings, risk: _risk, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin);
       case 7:
         return const AboutScreen();
       case 8:

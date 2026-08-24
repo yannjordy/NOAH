@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../providers/providers.dart';
 import '../services/market_service.dart';
+import '../services/cache_service.dart';
 import '../services/storage_service.dart';
 import '../theme/glass_theme.dart';
 
@@ -11,6 +12,7 @@ class SettingsScreen extends StatelessWidget {
   final AuthProvider auth;
   final ChatProvider chat;
   final MarketService market;
+  final CacheService cache;
   final StorageService storage;
   final VoidCallback openLogin;
 
@@ -21,6 +23,7 @@ class SettingsScreen extends StatelessWidget {
     required this.auth,
     required this.chat,
     required this.market,
+    required this.cache,
     required this.storage,
     required this.openLogin,
   });

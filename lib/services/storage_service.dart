@@ -86,7 +86,7 @@ class StorageService {
     return email.isEmpty ? null : email;
   }
 
-  void setLoggedEmail(String email) => _set(_loggedEmailKey, email);
+  void setLoggedEmail(String? email) => _set(_loggedEmailKey, email ?? '');
 
   // Admin password
   bool hasAdminPassword() => _store.containsKey(_adminKey);
