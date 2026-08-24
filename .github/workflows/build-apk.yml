@@ -8,9 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ai_trading_app
 
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +17,6 @@ jobs:
           flutter-version: 3.44.1
           channel: stable
 
-      - name: Create .env
-        run: |
-          mkdir -p assets
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > assets/.env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> assets/.env
-
       - run: flutter pub get
 
       - run: flutter build apk --release
@@ -33,4 +24,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: noah-release-apk
-          path: ai_trading_app/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
