@@ -68,3 +68,4 @@ class NoahApp extends StatelessWidget {
 }
 
 // SplashGate supprimé — inutilisé
+// build trigger
