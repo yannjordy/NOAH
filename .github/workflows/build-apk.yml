@@ -33,15 +33,12 @@ jobs:
           cp -r lib temp_project/lib
           cp pubspec.yaml temp_project/pubspec.yaml
 
+      - name: Fix Kotlin version
+        run: |
+          sed -i 's/id("org.jetbrains.kotlin.android") version ".*"/id("org.jetbrains.kotlin.android") version "1.9.22"/' temp_project/android/settings.gradle
+
       - name: Flutter pub get
         run: cd temp_project && flutter pub get
-
-      - name: Fix plugin compileSdkVersion
-        run: |
-          find temp_project/.android -name "build.gradle" -exec grep -l "app_links\|compileSdkVersion" {} \; 2>/dev/null || true
-          find temp_project -path "*/app_links/android/build.gradle" 2>/dev/null | while read f; do
-            sed -i 's/^android {/android {\n    compileSdkVersion 34/' "$f"
-          done
 
       - name: Build APK
         run: cd temp_project && flutter build apk --release
