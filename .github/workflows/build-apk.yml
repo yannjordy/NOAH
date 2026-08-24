@@ -33,11 +33,23 @@ jobs:
           cp -r lib temp_project/lib
           cp pubspec.yaml temp_project/pubspec.yaml
 
-      - name: Pin Kotlin version
+      - name: Pin Kotlin 2.0.0
         run: |
           cd temp_project/android
-          sed -i 's/id("org.jetbrains.kotlin.android") version "[^"]*"/id("org.jetbrains.kotlin.android") version "2.0.0"/' settings.gradle
-          sed -i 's/kotlin_version = "[^"]*"/kotlin_version = "2.0.0"/' build.gradle
+          # Flutter 3.24 uses version catalog — update libs.versions.toml
+          TOML=gradle/libs.versions.toml
+          if [ -f "$TOML" ]; then
+            sed -i 's/^kotlin = "[^"]*"/kotlin = "2.0.0"/' "$TOML"
+          fi
+          # Also try settings.gradle (older format)
+          if [ -f settings.gradle ]; then
+            sed -i 's/id("org.jetbrains.kotlin.android") version "[^"]*"/id("org.jetbrains.kotlin.android") version "2.0.0"/' settings.gradle
+          fi
+          # Also try build.gradle (legacy format)
+          if [ -f build.gradle ]; then
+            sed -i 's/kotlin_version = "[^"]*"/kotlin_version = "2.0.0"/' build.gradle
+          fi
+          # Force gradle.properties
           echo "kotlin_version=2.0.0" >> gradle.properties
 
       - name: Flutter pub get
