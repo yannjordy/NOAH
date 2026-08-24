@@ -49,7 +49,6 @@ class HamburgerPanel extends StatelessWidget {
       ('Risk Engine', 'Limites, sécurité, stop trading', 5),
       ('Settings', 'Compte, thème, IA, notifications', 6),
       ('About NOAH', 'Version, vision, support', 7),
-      ('Backtesting', 'Tester stratégies sur données historiques', 8),
     ];
 
     return Positioned(
@@ -98,7 +97,7 @@ class HamburgerPanel extends StatelessWidget {
                             letterSpacing: 4,
                             color: accent,
                             shadows: [
-                              Shadow(color: accent.withOpacity( 0.3), blurRadius: 8),
+                              Shadow(color: accent.withValues(alpha: 0.3), blurRadius: 8),
                             ],
                           )),
                           const SizedBox(width: 10),
@@ -148,10 +147,10 @@ class HamburgerPanel extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16),
                                       color: active
-                                          ? accent.withOpacity( 0.15)
+                                          ? accent.withValues(alpha: 0.15)
                                           : Colors.transparent,
                                     ),
-                                    child: Center(child: Icon(_menuIcon(item.$3, active ? accent : t1), size: 18, color: active ? accent : t1)),
+                                    child: Center(child: _menuIcon(item.$3, active ? accent : t1)),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -201,58 +200,27 @@ class HamburgerPanel extends StatelessWidget {
                             onClose();
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                             decoration: BoxDecoration(
-                              color: accentBg,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: accent.withOpacity( 0.2)),
+                              border: Border.all(color: glassBorder),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.add_comment_outlined, size: 16, color: accent),
-                                const SizedBox(width: 10),
-                                Text('Nouveau chat', style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w600, color: accent,
+                                Icon(Icons.add, size: 16, color: accent),
+                                const SizedBox(width: 8),
+                                Text('Nouvelle conversation', style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: accent,
                                 )),
                               ],
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                // Footer
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: glassBorder)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: accentBg,
-                          border: Border.all(color: accent.withOpacity( 0.3)),
-                        ),
-                        child: Icon(Icons.person, size: 18, color: accent),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(authProvider.displayName, style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: t0,
-                            )),
-                            Text(authProvider.isLoggedIn ? authProvider.displayEmail : 'Mode démo',
-                                style: TextStyle(fontSize: 11, color: t2)),
-                          ],
-                        ),
-                      ),
+                      // History list
+                      _buildHistoryList(context, isDark, t0, t2, t3, red, redBg, accent, accentBg, glassBorder),
                     ],
                   ),
                 ),
@@ -264,18 +232,88 @@ class HamburgerPanel extends StatelessWidget {
     );
   }
 
-  IconData _menuIcon(int index, Color color) {
-    final icons = [
-      Icons.dashboard_outlined,
-      Icons.chat_bubble_outline,
-      Icons.bar_chart_outlined,
-      Icons.wifi_outlined,
-      Icons.account_balance_wallet_outlined,
-      Icons.shield_outlined,
-      Icons.settings_outlined,
-      Icons.info_outline,
-      Icons.science_outlined,
-    ];
-    return index < icons.length ? icons[index] : Icons.circle;
+  Widget _buildHistoryList(
+      BuildContext context, bool isDark, Color t0, Color t2, Color t3,
+      Color red, Color redBg, Color accent, Color accentBg, Color glassBorder) {
+    final sessions = chatProvider.getSessions();
+    if (sessions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Aucune conversation\nCommencez à discuter avec NOAH',
+            textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: t2, height: 1.5)),
+      );
+    }
+    return SizedBox(
+      height: 220,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+        itemCount: sessions.length > 20 ? 20 : sessions.length,
+        itemBuilder: (context, i) {
+          final s = sessions[i];
+          final isActive = s.id == chatProvider.currentSessionId;
+          final dt = DateTime.fromMillisecondsSinceEpoch(s.date);
+          final dateStr = '${dt.day}/${dt.month < 10 ? '0${dt.month}' : dt.month}';
+          final timeStr = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+          return GestureDetector(
+            onTap: () {
+              chatProvider.loadSession(s.id);
+              onGoTab(1);
+              onClose();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isActive ? accentBg : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 24, height: 24,
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                    child: Icon(Icons.chat_bubble_outline, size: 16, color: t2),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: t0),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 1),
+                        Text('$dateStr à $timeStr · ${s.msgs.length} msg',
+                            style: TextStyle(fontSize: 10, color: t2)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => chatProvider.deleteSession(s.id),
+                    child: Container(
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
+                      child: Icon(Icons.close, size: 14, color: t3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _menuIcon(int tab, Color color) {
+    final icons = {
+      0: Icons.dashboard_outlined,
+      1: Icons.chat_bubble_outline,
+      2: Icons.bar_chart_outlined,
+      3: Icons.link,
+      4: Icons.account_balance_wallet_outlined,
+      5: Icons.shield_outlined,
+      6: Icons.settings_outlined,
+      7: Icons.info_outline,
+    };
+    return Icon(icons[tab] ?? Icons.circle_outlined, size: 20, color: color);
   }
 }

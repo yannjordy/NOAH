@@ -1,26 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/providers.dart';
 import '../theme/noah_theme.dart';
 
-const _incompatibleApis = {
-  'Anthropic Claude',
-  'Google Gemini',
-  'Meta LLaMA',
-  'Replicate',
-};
+const _incompatibleApis = {'Anthropic Claude', 'Google Gemini', 'Meta LLaMA', 'Replicate'};
 
 class ConnectionsScreen extends StatefulWidget {
   final AuthProvider auth;
   final ChatProvider chat;
   final void Function(int) openLogin;
 
-  const ConnectionsScreen({
-    super.key,
-    required this.auth,
-    required this.chat,
-    required this.openLogin,
-  });
+  const ConnectionsScreen({super.key, required this.auth, required this.chat, required this.openLogin});
 
   @override
   State<ConnectionsScreen> createState() => _ConnectionsScreenState();
@@ -43,715 +34,493 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
     super.dispose();
   }
 
-  TextEditingController _ctrl(
-    Map<int, TextEditingController> map,
-    int i,
-    String v,
-  ) {
+  TextEditingController _ctrl(Map<int, TextEditingController> map, int i, String v) {
     return map.putIfAbsent(i, () => TextEditingController(text: v));
   }
 
-  bool _isConnected(String provider) {
-    return widget.chat.connectedModels.containsKey(provider);
-  }
-
-  void _toggle(int index) {
-    setState(() {
-      if (_expanded.contains(index)) {
-        _expanded.remove(index);
-      } else {
-        _expanded.add(index);
-      }
-    });
-  }
-
-  Future<void> _testOpenCode(int index) async {
-    setState(() => _opencodeTesting[index] = true);
-    final url = _urlCtrls[index]?.text.trim() ?? '';
-    if (url.isNotEmpty) {
-      widget.chat.updateOpenCodeUrl(url);
+  void _saveProvider(int i, _ProviderData p) async {
+    if (!widget.auth.isLoggedIn) {
+      widget.openLogin(0);
+      return;
     }
-    final ok = await widget.chat.testOpenCodeConnection();
+    final apiKey = _apiCtrls[i]?.text.trim() ?? '';
+    if (apiKey.isEmpty && p.placeholder.isNotEmpty && p.name != 'Binance API' && p.name != 'OpenCode Local') {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Entrez une clé API pour ${p.name}'), duration: const Duration(seconds: 2)),
+      );
+      return;
+    }
+    final secretKey = _secretCtrls[i]?.text.trim() ?? '';
+    if (p.name == 'OpenCode Local') {
+      final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:3000';
+      widget.chat.updateOpenCodeUrl(url);
+      // Auto-test and fetch models when connecting OpenCode
+      widget.chat.connectModel(p.name, p.model, apiKey: apiKey, secretKey: secretKey);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('🔍 Test de connexion OpenCode...'), duration: Duration(seconds: 2)),
+      );
+      final ok = await widget.chat.testOpenCodeConnection();
+      if (!mounted) return;
+      if (ok) {
+        final models = await widget.chat.fetchOpenCodeModels();
+        if (!mounted) return;
+        setState(() {
+          _opencodeOk[i] = true;
+          _opencodeModels[i] = models;
+        });
+        // Update the default model to first available model
+        if (models.isNotEmpty && !models.contains(p.model)) {
+          p.model = models.first;
+          widget.chat.connectModel(p.name, models.first, apiKey: apiKey, secretKey: secretKey);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✅ OpenCode connecté — ${models.length} modèles disponibles'), duration: const Duration(seconds: 3)),
+        );
+      } else {
+        setState(() {
+          _opencodeOk[i] = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('⚠️ OpenCode configuré — vérifiez l\'URL dans les paramètres'), duration: Duration(seconds: 3)),
+        );
+      }
+    } else {
+      widget.chat.connectModel(p.name, p.model, apiKey: apiKey, secretKey: secretKey);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('${p.name} connecté'), duration: const Duration(seconds: 1)),
+      );
+    }
+  }
+
+  Future<void> _testOpenCode(int i, _ProviderData p) async {
+    final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:3000';
     setState(() {
-      _opencodeOk[index] = ok;
-      _opencodeTesting[index] = false;
+      _opencodeTesting[i] = true;
+      _opencodeOk.remove(i);
+    });
+    widget.chat.updateOpenCodeUrl(url);
+    final ok = await widget.chat.testOpenCodeConnection();
+    if (!mounted) return;
+    setState(() {
+      _opencodeTesting[i] = false;
+      _opencodeOk[i] = ok;
     });
     if (ok) {
       final models = await widget.chat.fetchOpenCodeModels();
-      setState(() => _opencodeModels[index] = models);
+      if (!mounted) return;
+      setState(() => _opencodeModels[i] = models);
+      // Auto-connect with first available model
+      final model = models.isNotEmpty ? models.first : p.model;
+      widget.chat.connectModel(p.name, model);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('✅ OpenCode connecté — ${models.length} modèles — Chat et Agents actifs'), duration: const Duration(seconds: 3)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Impossible de joindre OpenCode — vérifiez l\'URL'), duration: Duration(seconds: 2)),
+      );
     }
   }
 
-  void _connectOpenCode(int index) {
-    final url = _urlCtrls[index]?.text.trim() ?? '';
-    final model = _opencodeModels[index]?.isNotEmpty == true
-        ? _opencodeModels[index]!.first
-        : 'default';
-    final apiKey = _apiCtrls[index]?.text.trim() ?? '';
-    if (url.isNotEmpty) widget.chat.updateOpenCodeUrl(url);
-    widget.chat.connectModel('OpenCode Local', model, apiKey: apiKey);
-    setState(() {});
-  }
-
-  void _disconnect(String provider) {
-    widget.chat.disconnectModel(provider);
-    setState(() {});
-  }
-
-  void _connectGeneric(String provider, String model) {
-    final apiKey = _apiCtrls[provider.hashCode]?.text.trim() ?? '';
-    widget.chat.connectModel(provider, model, apiKey: apiKey);
+  Future<void> _testBinance() async {
+    final ok = await widget.chat.testBinanceConnection();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? '✅ Connexion Binance réussie' : '❌ Échec de connexion Binance'),
+        duration: const Duration(seconds: 3),
+      ),
+    );
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg0 = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
-    final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
-    final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
-    final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
-    final borderMd = isDark ? const Color(0x17FFFFFF) : const Color(0x1A000000);
-    final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
-    final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
-    final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
-    final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
-    final green = isDark ? const Color(0xFF4CAF8E) : const Color(0xFF2E7D5E);
-    final red = isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A);
-
-    final cards = <Map<String, dynamic>>[
-      {
-        'name': 'OpenCode Local',
-        'icon': Icons.code,
-        'desc': 'Assistant IA local (OpenCode)',
-        'needsApiKey': true,
-        'needsUrl': true,
-        'urlHint': 'http://localhost:3000',
-        'apiKeyHint': 'Clé API (optionnel)',
-        'model': widget.chat.connectedModels['OpenCode Local'] ?? '',
-        'isOpencode': true,
-      },
-      {
-        'name': 'OpenAI',
-        'icon': Icons.auto_awesome,
-        'desc': 'GPT-4o, GPT-4, GPT-3.5',
-        'needsApiKey': true,
-        'apiKeyHint': 'sk-...',
-        'model': widget.chat.connectedModels['OpenAI'] ?? '',
-        'models': ['gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
-      },
-      {
-        'name': 'Anthropic Claude',
-        'icon': Icons.psychology,
-        'desc': 'Claude 3.5, Claude 3',
-        'needsApiKey': true,
-        'apiKeyHint': 'sk-ant-...',
-        'model': widget.chat.connectedModels['Anthropic Claude'] ?? '',
-        'models': ['claude-3.5-sonnet', 'claude-3-haiku'],
-        'incompatible': true,
-      },
-      {
-        'name': 'DeepSeek',
-        'icon': Icons.water_drop,
-        'desc': 'DeepSeek V3, DeepSeek R1',
-        'needsApiKey': true,
-        'apiKeyHint': 'sk-...',
-        'model': widget.chat.connectedModels['DeepSeek'] ?? '',
-        'models': ['deepseek-chat', 'deepseek-reasoner'],
-      },
-      {
-        'name': 'Binance API',
-        'icon': Icons.candlestick_chart,
-        'desc': 'Trading réel sur Binance',
-        'needsApiKey': true,
-        'needsSecret': true,
-        'apiKeyHint': 'Clé API Binance',
-        'secretHint': 'Clé secrète',
-        'model': widget.chat.connectedModels['Binance API'] ?? '',
-        'isBinance': true,
-      },
+    final savedOpenCodeUrl = widget.chat.getSavedOpenCodeUrl();
+    final providers = [
+      _ProviderData('OpenAI', 'gpt-4o', ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1', 'o1-mini'], false, const Color(0xFF10A37F), 'AI', 'sk-proj-...', apiUrl: 'https://platform.openai.com/api-keys'),
+      _ProviderData('DeepSeek', 'deepseek-chat', ['deepseek-chat', 'deepseek-reasoner', 'deepseek-chat-v3'], true, const Color(0xFF4D6BFE), 'DS', 'sk-...', apiUrl: 'https://platform.deepseek.com/api_keys'),
+      _ProviderData('DeepSeek Flash', 'deepseek-chat', ['deepseek-chat', 'deepseek-reasoner', 'deepseek-chat-v3'], true, const Color(0xFF4D6BFE), 'DF', 'sk-...', free: true, apiUrl: 'https://platform.deepseek.com/api_keys'),
+      _ProviderData('Anthropic Claude', 'claude-3-5-sonnet', ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-2.1'], false, const Color(0xFFCC7833), 'AN', 'sk-ant-...', apiUrl: 'https://console.anthropic.com/keys'),
+      _ProviderData('Google Gemini', 'gemini-1.5-pro', ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro', 'gemma-2-27b', 'gemma-2-9b'], false, const Color(0xFF4285F4), 'Gm', 'AIza...', apiUrl: 'https://aistudio.google.com/apikey'),
+      _ProviderData('Meta LLaMA', 'llama-3.1-405b', ['llama-3.1-405b', 'llama-3.1-70b', 'llama-3.1-8b', 'llama-3-70b', 'llama-3-8b', 'code-llama-34b'], true, const Color(0xFF1877F2), 'Ml', '', free: true, apiUrl: 'https://llama.meta.com/'),
+      _ProviderData('Mistral AI', 'mistral-large-2', ['mistral-large-2', 'mistral-small', 'mixtral-8x22b', 'mixtral-8x7b', 'codestral-22b'], false, const Color(0xFFFF6B35), 'Ms', '', apiUrl: 'https://console.mistral.ai/api-keys/'),
+      _ProviderData('xAI Grok', 'grok-2', ['grok-2', 'grok-1'], false, const Color(0xFF1C1C1C), 'Gk', '', apiUrl: 'https://x.ai/api'),
+      _ProviderData('Perplexity', 'sonar-medium', ['sonar-pro', 'sonar-medium', 'mixtral-8x22b-perp'], false, const Color(0xFF5436DB), 'Pe', '', apiUrl: 'https://www.perplexity.ai/settings/api'),
+      _ProviderData('Cohere', 'command-r+', ['command-r+', 'command-r', 'command-light'], false, const Color(0xFF3952FF), 'Co', '', apiUrl: 'https://dashboard.cohere.com/api-keys'),
+      _ProviderData('AI21 Labs', 'jamba-1.5-large', ['jamba-1.5-large', 'jamba-1.5-mini'], false, const Color(0xFF00A3FF), '21', '', apiUrl: 'https://www.ai21.com/studio'),
+      _ProviderData('Groq', 'llama-3.3-70b-versatile', ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b'], true, const Color(0xFFFF5722), 'Gq', '', free: true, apiUrl: 'https://console.groq.com/keys'),
+      _ProviderData('Together AI', 'meta-llama-3.1-405b', ['meta-llama-3.1-405b', 'meta-llama-3.1-70b', 'mistral-8x22b', 'deepseek-llm-67b'], false, const Color(0xFF6B21A8), 'TA', '', apiUrl: 'https://api.together.xyz/settings/api-keys'),
+      _ProviderData('Fireworks AI', 'llama-v3p1-405b', ['llama-v3p1-405b', 'llama-v3p1-70b', 'deepseek-v3', 'mixtral-8x22b'], true, const Color(0xFFFF6B35), 'Fw', '', free: true, apiUrl: 'https://fireworks.ai/api-keys'),
+      _ProviderData('Replicate', 'meta-llama-3.1-70b', ['meta-llama-3.1-405b', 'meta-llama-3.1-70b', 'mixtral-8x7b', 'claude-3-sonnet'], false, const Color(0xFF667788), 'Rp', 'r8-...', apiUrl: 'https://replicate.com/account/api-tokens'),
+      _ProviderData('OpenRouter', 'openrouter/auto', ['openrouter/auto', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-405b-instruct'], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: true, apiUrl: 'https://openrouter.ai/keys'),
+      _ProviderData('Lepton AI', 'llama-3.1-70b', ['llama-3.1-405b', 'llama-3.1-70b', 'llama-3.1-8b'], false, const Color(0xFF4F46E5), 'Le', '', apiUrl: 'https://dashboard.lepton.ai/'),
+      _ProviderData('Novita AI', 'llama-3.1-70b', ['llama-3.1-405b', 'llama-3.1-70b', 'deepseek-v3', 'mixtral-8x22b'], false, const Color(0xFF10B981), 'Nv', '', apiUrl: 'https://novita.ai/api-key'),
+      _ProviderData('Hugging Face', 'HuggingFaceH4/zephyr-7b-beta', ['HuggingFaceH4/zephyr-7b-beta', 'mistralai/Mistral-7B-Instruct-v0.3', 'meta-llama/Llama-3.2-3B-Instruct'], true, const Color(0xFFFFBF00), 'HF', '', free: true, apiUrl: 'https://huggingface.co/settings/tokens'),
+      _ProviderData('OpenCode Local', widget.chat.currentModel.startsWith('opencode/') ? widget.chat.currentModel : 'opencode/mimo-v2.5-free', _opencodeModels[18] ?? const [
+        'opencode/mimo-v2.5-free',
+        'opencode/big-pickle',
+        'opencode/deepseek-v4-flash-free',
+        'opencode/gpt-5-nano',
+        'opencode/nemotron-3-ultra-free',
+        'opencode/north-mini-code-free',
+        'opencode/qwen3.6-plus-free',
+        'opencode/minimax-m2.5-free',
+      ], false, const Color(0xFF00D4AA), 'OC', '', free: true, apiUrl: 'https://opencode.ai', baseUrl: savedOpenCodeUrl.isNotEmpty ? savedOpenCodeUrl : 'http://localhost:3000'),
+      _ProviderData('Binance API', '', [], false, const Color(0xFFF0B90B), 'BN', 'Clé API', hasSecret: true, apiUrl: 'https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'),
+      _ProviderData('DeerFlow Agent', 'deerflow-agent', ['deerflow-agent'], false, const Color(0xFF22C55E), 'Df', 'http://localhost:2026', free: true, apiUrl: 'https://github.com/anomalyco/opencode'),
+      _ProviderData('NOAH Trading Core', 'trading-core', ['trading-core'], false, const Color(0xFFB08D57), 'NC', 'http://localhost:8001', free: true, apiUrl: null),
     ];
 
-    return Container(
-      color: bg0,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    return ListenableBuilder(
+        listenable: widget.chat,
+        builder: (context, _) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bg0 = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
+          final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+          final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
+          final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
+          final borderMd = isDark ? const Color(0x17FFFFFF) : const Color(0x1A000000);
+          final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
+          final accentBorder = isDark ? const Color(0x2EC2A878) : const Color(0x33B08D57);
+          final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
+          final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
+          final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
+          final t3 = isDark ? const Color(0xFF4A4A4A) : const Color(0xFFC8C8C8);
+          final green = isDark ? const Color(0xFF4CAF8E) : const Color(0xFF2E7D5E);
+          final greenBg = isDark ? const Color(0x144CAF8E) : const Color(0x142E7D5E);
+        return ListView.builder(
+        padding: const EdgeInsets.all(14),
+        itemCount: providers.length + 1,
+        itemBuilder: (context, idx) {
+          if (idx == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
-                  Text(
-                    'Connexions',
-                    style: TextStyle(
-                      fontFamily: 'PlayfairDisplay',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: t0,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${widget.chat.connectedModels.length} actives',
-                    style: TextStyle(fontSize: 11, color: t2),
-                  ),
+                  Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(width: 8),
+                  Text('Fournisseurs IA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
                 ],
               ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 4,
-                ),
-                itemCount: cards.length,
-                itemBuilder: (context, i) {
-                  final card = cards[i];
-                  final name = card['name'] as String;
-                  final icon = card['icon'] as IconData;
-                  final desc = card['desc'] as String;
-                  final connected = _isConnected(name);
-                  final expanded = _expanded.contains(i);
+            );
+          }
+          final i = idx - 1;
+          final p = providers[i];
+          final open = _expanded.contains(i);
+          final savedKey = widget.chat.getSavedApiKey(p.name);
+          final apiCtrl = _ctrl(_apiCtrls, i, savedKey.isNotEmpty ? savedKey : p.placeholder);
+          final secretCtrl = p.hasSecret ? _ctrl(_secretCtrls, i, '') : null;
 
-                  return GestureDetector(
-                    onTap: () => _toggle(i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: bg1,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: connected
-                              ? accent.withOpacity( 0.3)
-                              : borderMd,
-                          width: connected ? 1.5 : 1,
+          if (p.baseUrl != null && !_urlCtrls.containsKey(i)) {
+            _urlCtrls[i] = TextEditingController(text: p.baseUrl);
+          }
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                if (open) _expanded.remove(i); else _expanded.add(i);
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: bg1,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: open ? accentBorder : border),
+                boxShadow: open ? NoahTheme.shadowMd(isDark) : NoahTheme.shadow(isDark),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(
+                            color: p.color.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Center(
+                            child: Text(p.initials,
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: p.color)),
+                          ),
                         ),
-                        boxShadow: connected
-                            ? [
-                                BoxShadow(
-                                  color: accent.withOpacity( 0.1),
-                                  blurRadius: 12,
-                                ),
-                              ]
-                            : null,
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(p.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t0)),
+                                  if (p.free) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(color: greenBg, borderRadius: BorderRadius.circular(4)),
+                                      child: Text('GRATUIT', style: TextStyle(fontSize: 7, fontWeight: FontWeight.w800, color: green, letterSpacing: 0.5)),
+                                    ),
+                                  ],
+                                  if (_incompatibleApis.contains(p.name)) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(color: Color(0x2EEF5350), borderRadius: BorderRadius.circular(4)),
+                                      child: Text('⚠️', style: TextStyle(fontSize: 7, fontWeight: FontWeight.w800, color: Color(0xFFEF5350))),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(p.model, style: TextStyle(fontSize: 11, color: t2)),
+                            ],
+                          ),
+                        ),
+                        if (p.name == 'OpenCode Local') ...[
+                          if (_opencodeOk[i] == true)
+                            Icon(Icons.check_circle, size: 16, color: green)
+                          else if (_opencodeOk[i] == false)
+                            Icon(Icons.error_outline, size: 16, color: const Color(0xFFEF5350))
+                          else
+                            Icon(Icons.help_outline, size: 16, color: t3),
+                          const SizedBox(width: 6),
+                        ],
+                        Icon(open ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 18, color: t2),
+                      ],
+                    ),
+                  ),
+                  AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 250),
+                    crossFadeState: open ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    firstChild: Container(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: connected
-                                      ? accent.withOpacity( 0.15)
-                                      : bg2,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  icon,
-                                  size: 18,
-                                  color: connected ? accent : t2,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: t0,
+                          const Divider(height: 1),
+                          const SizedBox(height: 12),
+                          if (p.baseUrl != null) ...[
+                            Text('URL du serveur', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                              decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderMd)),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _urlCtrls[i],
+                                      style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, color: t0),
+                                      decoration: InputDecoration.collapsed(hintText: 'http://localhost:3000', hintStyle: TextStyle(color: t3)),
+                                      onChanged: (v) {
+                                        if (p.name == 'OpenCode Local') {
+                                          widget.chat.updateOpenCodeUrl(v.trim());
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  if (p.name == 'OpenCode Local') ...[
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: _opencodeTesting[i] == true ? null : () => _testOpenCode(i, p),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: _opencodeOk[i] == true ? greenBg : bg1,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: _opencodeOk[i] == true ? green : borderMd),
+                                        ),
+                                        child: _opencodeTesting[i] == true
+                                            ? SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: t2))
+                                            : Icon(
+                                                _opencodeOk[i] == true ? Icons.check : Icons.wifi_tethering,
+                                                size: 14,
+                                                color: _opencodeOk[i] == true ? green : t2,
+                                              ),
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (p.name != 'OpenCode Local') ...[
+                            Text('API Key', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                              decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderMd)),
+                              child: TextField(
+                                controller: apiCtrl,
+                                obscureText: true,
+                                style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, color: t0),
+                                decoration: InputDecoration.collapsed(hintText: p.placeholder, hintStyle: TextStyle(color: t3)),
+                              ),
+                            ),
+                          ],
+                          if (p.models.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text('Modèle', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                              decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderMd)),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: p.models.contains(p.model) ? p.model : p.models.first,
+                                  isExpanded: true,
+                                  style: TextStyle(fontSize: 12, color: t0),
+                                  dropdownColor: isDark ? const Color(0xFF282828) : const Color(0xFFFFFFFF),
+                                  items: p.models.map((m) => DropdownMenuItem(value: m, child: Text(m, style: TextStyle(fontSize: 11, color: t0)))).toList(),
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    setState(() => p.model = v);
+                                    final savedKey = widget.chat.getSavedApiKey(p.name);
+                                    widget.chat.connectModel(p.name, v, apiKey: savedKey);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (p.hasSecret) ...[
+                            const SizedBox(height: 8),
+                            Text('Secret Key', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                              decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderMd)),
+                              child: TextField(
+                                controller: secretCtrl,
+                                obscureText: true,
+                                style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, color: t0),
+                                decoration: InputDecoration.collapsed(hintText: 'Secret Key', hintStyle: TextStyle(color: t3)),
+                              ),
+                            ),
+                          ],
+                          if (p.name == 'Binance API') ...[
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: _testBinance,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: widget.chat.binanceWorking ? greenBg : bg2,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: widget.chat.binanceWorking ? green : borderMd,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      widget.chat.binanceWorking
+                                          ? Icons.check_circle
+                                          : Icons.wifi_tethering,
+                                      size: 14,
+                                      color: widget.chat.binanceWorking ? green : t2,
+                                    ),
+                                    const SizedBox(width: 5),
                                     Text(
-                                      connected
-                                          ? 'Connecté: ${card['model']}'
-                                          : desc,
+                                      widget.chat.binanceWorking
+                                          ? '✅ Connecté à Binance'
+                                          : widget.chat.binanceConnected
+                                              ? 'Tester la connexion'
+                                              : 'Tester après connexion',
                                       style: TextStyle(
-                                        fontSize: 10,
-                                        color: connected ? accent : t2,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: widget.chat.binanceWorking ? green : t1,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              if (connected) ...[
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: name == 'Binance API'
-                                        ? (widget.chat.binanceWorking
-                                              ? green
-                                              : red)
-                                        : green,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            (name == 'Binance API'
-                                                    ? (widget
-                                                              .chat
-                                                              .binanceWorking
-                                                          ? green
-                                                          : red)
-                                                    : green)
-                                                .withOpacity( 0.5),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                              Icon(
-                                expanded
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                size: 20,
-                                color: t2,
-                              ),
-                            ],
-                          ),
-                          if (expanded) ...[
-                            const SizedBox(height: 14),
-                            if (card['isOpencode'] == true) ...[
-                              _urlField(
-                                i,
-                                bg2,
-                                border,
-                                t0,
-                                t1,
-                                card['urlHint'] ?? '',
-                                isDark,
-                              ),
-                              const SizedBox(height: 10),
-                              _apiKeyField(
-                                i,
-                                bg2,
-                                border,
-                                t0,
-                                t1,
-                                card['apiKeyHint'] ?? '',
-                                isDark,
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _testBtn(
-                                      'Tester',
-                                      accent,
-                                      _opencodeTesting[i] ?? false,
-                                      () => _testOpenCode(i),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (_opencodeOk[i] == true)
-                                    Expanded(
-                                      child: _connectBtn(
-                                        'Connecter',
-                                        accent,
-                                        () => _connectOpenCode(i),
-                                      ),
-                                    ),
-                                  if (connected)
-                                    Expanded(
-                                      child: _disconnectBtn(
-                                        red,
-                                        () => _disconnect(name),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              if (_opencodeModels[i]?.isNotEmpty == true) ...[
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  children: _opencodeModels[i]!
-                                      .take(5)
-                                      .map(
-                                        (m) => Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: bg2,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(color: border),
-                                          ),
-                                          child: Text(
-                                            m,
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontFamily: 'JetBrainsMono',
-                                              color: t1,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              ],
-                            ] else if (card['isBinance'] == true) ...[
-                              _apiKeyField(
-                                i,
-                                bg2,
-                                border,
-                                t0,
-                                t1,
-                                card['apiKeyHint'] ?? '',
-                                isDark,
-                              ),
-                              const SizedBox(height: 10),
-                              _secretField(
-                                i,
-                                bg2,
-                                border,
-                                t0,
-                                t1,
-                                card['secretHint'] ?? '',
-                                isDark,
-                              ),
-                              const SizedBox(height: 10),
-                              if (connected)
-                                _disconnectBtn(red, () => _disconnect(name))
-                              else
-                                _connectBtn('Connecter Binance', accent, () {
-                                  final apiKey =
-                                      _apiCtrls[i]?.text.trim() ?? '';
-                                  final secret =
-                                      _secretCtrls[i]?.text.trim() ?? '';
-                                  if (apiKey.isNotEmpty && secret.isNotEmpty) {
-                                    widget.chat.connectModel(
-                                      name,
-                                      'binance',
-                                      apiKey: apiKey,
-                                      secretKey: secret,
-                                    );
-                                    setState(() {});
-                                  }
-                                }),
-                              if (connected) ...[
-                                const SizedBox(height: 8),
-                                FutureBuilder<bool>(
-                                  future: widget.chat.testBinanceConnection(),
-                                  builder: (_, snap) {
-                                    final ok = snap.data ?? false;
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: (ok ? green : red).withOpacity(
-                                          0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            ok
-                                                ? Icons.check_circle
-                                                : Icons.error,
-                                            size: 12,
-                                            color: ok ? green : red,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            ok
-                                                ? 'Binance connecté'
-                                                : 'Test en cours...',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: ok ? green : red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ] else ...[
-                              if (card['needsApiKey'] == true)
-                                _apiKeyField(
-                                  i,
-                                  bg2,
-                                  border,
-                                  t0,
-                                  t1,
-                                  card['apiKeyHint'] ?? '',
-                                  isDark,
-                                ),
-                              const SizedBox(height: 10),
-                              if (card['needsSecret'] == true) ...[
-                                _secretField(
-                                  i,
-                                  bg2,
-                                  border,
-                                  t0,
-                                  t1,
-                                  card['secretHint'] ?? '',
-                                  isDark,
-                                ),
-                                const SizedBox(height: 10),
-                              ],
-                              if (card['incompatible'] == true)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: red.withOpacity( 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: red.withOpacity( 0.2),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'API incompatible avec le format OpenAI. Connectez DeepSeek ou OpenAI à la place.',
-                                    style: TextStyle(fontSize: 10, color: red),
-                                  ),
-                                ),
-                              Row(
-                                children: [
-                                  if (connected)
-                                    Expanded(
-                                      child: _disconnectBtn(
-                                        red,
-                                        () => _disconnect(name),
-                                      ),
-                                    )
-                                  else if (card['incompatible'] != true)
-                                    Expanded(
-                                      child: _connectBtn(
-                                        'Connecter',
-                                        accent,
-                                        () {
-                                          final models =
-                                              card['models'] as List<String>?;
-                                          final model =
-                                              models?.first ?? 'default';
-                                          _connectGeneric(name, model);
-                                        },
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
+                            ),
                           ],
+                          const SizedBox(height: 12),
+                          if (p.apiUrl != null)
+                            GestureDetector(
+                              onTap: () => launchUrl(Uri.parse(p.apiUrl!), mode: LaunchMode.externalApplication),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: bg2,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: borderMd),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.open_in_new, size: 12, color: accent),
+                                    const SizedBox(width: 5),
+                                    Text('Obtenir une clé API', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: accent)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (p.apiUrl != null) const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () {
+                              if (widget.chat.connectedModels.containsKey(p.name)) {
+                                widget.chat.disconnectModel(p.name);
+                              } else {
+                                _saveProvider(i, p);
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              decoration: BoxDecoration(
+                                color: widget.chat.connectedModels.containsKey(p.name) ? green.withValues(alpha: 0.15) : accent,
+                                borderRadius: BorderRadius.circular(16),
+                                border: widget.chat.connectedModels.containsKey(p.name) ? Border.all(color: green.withValues(alpha: 0.3)) : null,
+                              ),
+                              child: Text(
+                                widget.chat.connectedModels.containsKey(p.name) ? '✅ Connecté' : 'Connecter',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                                    color: widget.chat.connectedModels.containsKey(p.name) ? green : Colors.white),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  );
-                },
+                    secondChild: const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          );
+        },
+      );
+    },
     );
   }
+}
 
-  Widget _apiKeyField(
-    int i,
-    Color bg,
-    Color border,
-    Color t0,
-    Color t1,
-    String hint,
-    bool isDark,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        controller: _ctrl(_apiCtrls, i, ''),
-        obscureText: true,
-        style: TextStyle(fontSize: 12, color: t0, fontFamily: 'JetBrainsMono'),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: t1, fontSize: 11),
-          prefixIcon: Icon(Icons.key, size: 14, color: t1),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-        ),
-      ),
-    );
-  }
+class _ProviderData {
+  final String name;
+  String model;
+  List<String> models;
+  final bool connected;
+  final Color color;
+  final String initials;
+  final String placeholder;
+  final bool free;
+  final bool hasSecret;
+  final String? apiUrl;
+  String? baseUrl;
 
-  Widget _secretField(
-    int i,
-    Color bg,
-    Color border,
-    Color t0,
-    Color t1,
-    String hint,
-    bool isDark,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        controller: _ctrl(_secretCtrls, i, ''),
-        obscureText: true,
-        style: TextStyle(fontSize: 12, color: t0, fontFamily: 'JetBrainsMono'),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: t1, fontSize: 11),
-          prefixIcon: Icon(Icons.lock, size: 14, color: t1),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _urlField(
-    int i,
-    Color bg,
-    Color border,
-    Color t0,
-    Color t1,
-    String hint,
-    bool isDark,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: TextField(
-        controller: _ctrl(_urlCtrls, i, widget.chat.getSavedOpenCodeUrl()),
-        style: TextStyle(fontSize: 12, color: t0, fontFamily: 'JetBrainsMono'),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: t1, fontSize: 11),
-          prefixIcon: Icon(Icons.link, size: 14, color: t1),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _testBtn(
-    String label,
-    Color accent,
-    bool loading,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: loading ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: accent.withOpacity( 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accent.withOpacity( 0.3)),
-        ),
-        child: Center(
-          child: loading
-              ? SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
-                    color: accent,
-                  ),
-                )
-              : Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: accent,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _connectBtn(String label, Color accent, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [accent, accent.withOpacity( 0.8)],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _disconnectBtn(Color red, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: red.withOpacity( 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: red.withOpacity( 0.3)),
-        ),
-        child: Center(
-          child: Text(
-            'Déconnecter',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: red,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  _ProviderData(this.name, this.model, this.models, this.connected, this.color,
+      this.initials, this.placeholder,
+      {this.free = false, this.hasSecret = false, this.apiUrl, this.baseUrl});
 }

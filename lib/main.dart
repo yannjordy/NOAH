@@ -20,7 +20,7 @@ void main() async {
     return true;
   };
 
-  await SystemChrome.setPreferredOrientations([
+    await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
@@ -68,4 +68,3 @@ class NoahApp extends StatelessWidget {
 }
 
 // SplashGate supprimé — inutilisé
-// build trigger

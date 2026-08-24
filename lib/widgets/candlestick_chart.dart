@@ -6,31 +6,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../models/models.dart';
 import '../theme/noah_theme.dart';
-import '../utils.dart';
-
-enum AnnotationType { trendLine, horizontal, ray, text }
-
-class ChartAnnotation {
-  final String id;
-  final AnnotationType type;
-  final double x1;
-  final double y1;
-  final double x2;
-  final double y2;
-  final Color color;
-  final String? label;
-
-  const ChartAnnotation({
-    required this.id,
-    required this.type,
-    required this.x1,
-    required this.y1,
-    required this.x2,
-    required this.y2,
-    required this.color,
-    this.label,
-  });
-}
 
 class CandlestickChart extends StatelessWidget {
   final List<Kline> data;
@@ -334,9 +309,9 @@ class _FullscreenChartState extends State<_FullscreenChart> {
                       margin: const EdgeInsets.only(right: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: active ? accent.withOpacity( 0.15) : bg2,
+                        color: active ? accent.withValues(alpha: 0.15) : bg2,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: active ? accent.withOpacity( 0.4) : borderMd),
+                        border: Border.all(color: active ? accent.withValues(alpha: 0.4) : borderMd),
                       ),
                       child: Row(
                         children: [
@@ -409,7 +384,7 @@ class _FullscreenChartState extends State<_FullscreenChart> {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
             decoration: BoxDecoration(
-              color: bg2.withOpacity( 0.9),
+              color: bg2.withValues(alpha: 0.9),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -1,5 +1,4 @@
 import 'agent_base.dart';
-import '../utils.dart';
 
 class TradingAgent extends BaseAgent {
   @override

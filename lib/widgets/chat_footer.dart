@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../providers/providers.dart';
+import '../services/native_file_picker.dart';
 
 class _FrostedButton extends StatelessWidget {
   final double size;
@@ -31,8 +31,8 @@ class _FrostedButton extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? Colors.white.withOpacity( 0.08) : const Color(0xFF2A2A2A).withOpacity( 0.85),
-              border: Border.all(color: isDark ? Colors.white.withOpacity( 0.12) : const Color(0xFF3A3A3A).withOpacity( 0.3)),
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF2A2A2A).withValues(alpha: 0.85),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFF3A3A3A).withValues(alpha: 0.3)),
             ),
             child: child,
           ),
@@ -156,34 +156,6 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     setState(() => _swipeCancelProgress = 0.0);
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galerie'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Caméra'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-    final picked = await picker.pickImage(source: source, imageQuality: 80);
-    if (picked != null) {
-      setState(() => _pendingImage = picked.path);
-    }
-  }
-
   void _send() {
     final text = _ctrl.text.trim();
     if (text.isEmpty && _pendingImage == null) return;
@@ -208,7 +180,6 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
-    final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final bg = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
 
     return Container(
@@ -217,8 +188,8 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            bg.withOpacity( 0),
-            bg.withOpacity( 0.85),
+            bg.withValues(alpha: 0),
+            bg.withValues(alpha: 0.85),
           ],
         ),
       ),
@@ -253,19 +224,35 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity( 0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: Image.file(File(_pendingImage!), width: 32, height: 32, fit: BoxFit.cover),
+                        child: Image.network(_pendingImage!, width: 32, height: 32, fit: BoxFit.cover),
                       ),
                       const SizedBox(width: 6),
                       Text('Image prête', style: TextStyle(fontSize: 11, color: t2)),
                       const Spacer(),
                       GestureDetector(onTap: () => setState(() => _pendingImage = null), child: Icon(Icons.close, size: 14, color: t2)),
+                    ],
+                  ),
+                ),
+              if (_voiceError.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(_voiceError, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A))),
+                ),
+              if (widget.chat.tradingEnabled)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.memory, size: 10, color: const Color(0xFF4CAF8E)),
+                      const SizedBox(width: 4),
+                      Text('Trading IA actif', style: TextStyle(fontSize: 9, color: const Color(0xFF4CAF8E))),
                     ],
                   ),
                 ),
@@ -276,76 +263,35 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                     size: 38,
                     accent: accent,
                     isDark: isDark,
-                    onTap: () => _sendQuick('Analyse BTC'),
-                    child: Icon(Icons.add, size: 18, color: accent),
+                    onTap: () => _showImportMenu(context),
+                    child: Icon(Icons.upload_file, size: 16, color: _pendingImage != null ? accent : isDark ? t2.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.7)),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity( 0.06) : const Color(0xFFEAE6DC).withOpacity( 0.9),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: isDark ? Colors.white.withOpacity( 0.08) : const Color(0xFFD5D0C6)),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _ctrl,
-                              onChanged: (v) {
-                                final has = v.trim().isNotEmpty;
-                                if (has != _hasText) setState(() => _hasText = has);
-                              },
-                              style: TextStyle(fontSize: 13, color: t0),
-                              decoration: InputDecoration(
-                                hintText: _isListening ? 'Écoute...' : 'Demande à NOAH...',
-                                hintStyle: TextStyle(color: t2, fontSize: 12),
-                                border: InputBorder.none,
+                    child: GestureDetector(
+                      onVerticalDragUpdate: (d) => _onSwipeUpdate(d.delta.dy),
+                      onVerticalDragEnd: (d) => _onSwipeEnd(d.primaryVelocity ?? 0),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.only(left: 4, right: 4, top: 6, bottom: 6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF1E1E1E) : Colors.white).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _cancelCtrl,
+                          builder: (_, __) {
+                            final cancelOffset = _cancelSlide.value * -80;
+                            return Transform.translate(
+                              offset: Offset(0, cancelOffset),
+                              child: Opacity(
+                                opacity: 1.0 - _cancelSlide.value,
+                                child: _buildInputRow(accent, isDark),
                               ),
-                              onSubmitted: (_) => _send(),
-                            ),
-                          ),
-                          if (_ctrl.text.isNotEmpty)
-                            GestureDetector(
-                              onTap: _send,
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 6),
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: accent,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.arrow_upward, size: 16, color: Colors.white),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  _FrostedButton(
-                    size: 38,
-                    accent: accent,
-                    isDark: isDark,
-                    onTap: _pickImage,
-                    child: Icon(Icons.image_outlined, size: 18, color: accent),
-                  ),
-                  const SizedBox(width: 6),
-                  _FrostedButton(
-                    size: 38,
-                    accent: accent,
-                    isDark: isDark,
-                    onTap: _toggleVoice,
-                    child: AnimatedBuilder(
-                      animation: _waveAnim,
-                      builder: (_, __) => Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        size: 18,
-                        color: _isListening
-                            ? Color.lerp(accent, const Color(0xFFE07060), _waveAnim.value)
-                            : t2,
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -358,30 +304,265 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
     );
   }
 
-  Widget _chip(String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildInputRow(Color accent, bool isDark) {
+    final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
+    final t3 = isDark ? const Color(0xFF4A4A4A) : const Color(0xFFC8C8C8);
+    final showCancelHint = _swipeCancelProgress > 0.3 && _isListening;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showCancelHint)
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: ((_swipeCancelProgress - 0.3) / 0.7).clamp(0.0, 1.0),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.arrow_upward, size: 12, color: isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A)),
+                  const SizedBox(width: 4),
+                  Text('Glisser vers le haut pour annuler', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A))),
+                ],
+              ),
+            ),
+          ),
+        Row(
+          children: [
+            _FrostedButton(
+              size: 30,
+              accent: accent,
+              isDark: isDark,
+              onTap: _voiceAvailable ? _toggleVoice : null,
+              child: AnimatedBuilder(
+                animation: _waveAnim,
+                builder: (_, __) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (_isListening)
+                        CustomPaint(
+                          size: const Size(30, 30),
+                          painter: _WaveformPainter(progress: _waveAnim.value, color: accent),
+                        ),
+                      Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        size: 14,
+                        color: _isListening ? Colors.white : isDark ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _isListening
+                  ? AnimatedBuilder(
+                      animation: _waveAnim,
+                      builder: (_, __) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (i) {
+                            final h = 6 + sin(_waveAnim.value * 2 * pi + i * 1.5) * 8 + 4;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 2),
+                              child: Container(
+                                width: 3,
+                                height: h.clamp(4.0, 20.0),
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: 0.6 + 0.4 * sin(_waveAnim.value * 3 + i * 1.2).abs()),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            );
+                          }),
+                        );
+                      },
+                    )
+                  : TextField(
+                      controller: _ctrl,
+                      onChanged: (v) => setState(() => _hasText = v.trim().isNotEmpty),
+                      onSubmitted: (_) => _send(),
+                      maxLines: 3,
+                      minLines: 1,
+                      style: TextStyle(fontSize: 13, color: t0, fontWeight: FontWeight.w500),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        isCollapsed: true,
+                        hintText: 'Posez une question à NOAH...',
+                        hintStyle: TextStyle(color: t3.withValues(alpha: 0.6)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 4),
+            ListenableBuilder(
+              listenable: widget.chat,
+              builder: (_, __) {
+                if (widget.chat.isTyping) {
+                  return _FrostedButton(
+                    size: 34,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: () => widget.chat.cancelResponse(),
+                    child: Icon(
+                      Icons.stop_rounded,
+                      size: 16,
+                      color: const Color(0xFFE07060),
+                    ),
+                  );
+                }
+                return _FrostedButton(
+                  size: 34,
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: (_hasText || _pendingImage != null) ? _send : null,
+                  child: Icon(
+                    Icons.send,
+                    size: 14,
+                    color: (_hasText || _pendingImage != null) ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _sendQuick(String text) {
+    if (widget.chat.isTyping) {
+      widget.chat.cancelResponse();
+    }
+    widget.chat.sendMessage(text);
+  }
+
+  Widget _chip(String label, IconData icon, Color accent, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final chipBg = isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFF2A2A2A).withValues(alpha: 0.85);
+    final chipBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFF3A3A3A).withValues(alpha: 0.3);
+    final chipText = isDark ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.only(right: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: chipBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: chipBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 11, color: accent.withValues(alpha: 0.8)),
+                const SizedBox(width: 3),
+                Text(label, style: TextStyle(fontSize: 10, color: chipText, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showImportMenu(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: (isDark ? const Color(0xFF1E1E1E) : Colors.white).withValues(alpha: 0.85),
+              border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _menuItem(Icons.image, 'Photo', () { _pickImage(ctx, ImageSource.gallery); }, isDark, context),
+                  _menuItem(Icons.camera_alt, 'Caméra', () { _pickImage(ctx, ImageSource.camera); }, isDark, context),
+                  _menuItem(Icons.insert_drive_file, 'Fichier', () { _pickFile(ctx); }, isDark, context),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _menuItem(IconData icon, String label, VoidCallback onTap, bool isDark, BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withOpacity( 0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity( 0.2)),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+            Icon(icon, size: 18, color: isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C)),
+            const SizedBox(width: 10),
+            Text(label, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C))),
           ],
         ),
       ),
     );
   }
 
-  void _sendQuick(String text) {
-    widget.chat.sendMessage(text);
+  Future<void> _pickImage(BuildContext ctx, ImageSource source) async {
+    Navigator.pop(ctx);
+    try {
+      final xfile = await ImagePicker().pickImage(source: source, maxWidth: 1024);
+      if (xfile != null) {
+        final bytes = await xfile.readAsBytes();
+        final b64 = base64Encode(bytes);
+        setState(() => _pendingImage = 'data:image/jpeg;base64,$b64');
+      }
+    } catch (_) {}
   }
+
+  Future<void> _pickFile(BuildContext ctx) async {
+    Navigator.pop(ctx);
+    try {
+      final result = await pickNativeFile();
+      if (result != null) {
+        widget.chat.sendMessage('📎 ${result.name}');
+      }
+    } catch (_) {}
+  }
+}
+
+class _WaveformPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  _WaveformPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.4)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    final center = size.height / 2;
+    final amp = size.height * 0.35 * (0.3 + 0.7 * progress);
+    for (var i = 0; i < 3; i++) {
+      final x = size.width / 2 + (i - 1) * 6;
+      final h = amp * (0.5 + 0.5 * sin(progress * 2 * pi + i * 1.2));
+      canvas.drawLine(Offset(x, center - h), Offset(x, center + h), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaveformPainter old) => old.progress != progress;
 }

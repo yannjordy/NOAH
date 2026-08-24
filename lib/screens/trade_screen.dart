@@ -6,9 +6,6 @@ import '../theme/noah_theme.dart';
 import '../services/strategy_engine.dart';
 import '../widgets/candlestick_chart.dart';
 import '../widgets/order_book.dart';
-import '../widgets/glass_chart.dart';
-import '../widgets/trading_mode_toggle.dart';
-import '../utils.dart';
 
 class TradeScreen extends StatefulWidget {
   final PortfolioProvider portfolio;
@@ -37,12 +34,10 @@ class TradeScreen extends StatefulWidget {
 }
 
 class _TradeScreenState extends State<TradeScreen> {
-  Map<String, double> get basePrices => {};
   final _qtyCtrl = TextEditingController(text: '0.001');
   final _slCtrl = TextEditingController();
   final _tpCtrl = TextEditingController();
   String _currentSymbol = 'BTC';
-  bool _isPro = true;
 
   @override
   void initState() {
@@ -176,7 +171,7 @@ class _TradeScreenState extends State<TradeScreen> {
             decoration: BoxDecoration(
               color: amberBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: amber.withOpacity( 0.3)),
+              border: Border.all(color: amber.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -233,14 +228,6 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          // Simple/Pro toggle
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: TradingModeToggle(
-              isPro: _isPro,
-              onChanged: (v) => setState(() => _isPro = v),
-            ),
-          ),
           // Price hero
           Container(
             padding: const EdgeInsets.all(16),
@@ -281,7 +268,7 @@ class _TradeScreenState extends State<TradeScreen> {
                     decoration: BoxDecoration(
                       color: posPnl >= 0 ? greenBg : redBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: posPnl >= 0 ? green.withOpacity( 0.3) : red.withOpacity( 0.3)),
+                      border: Border.all(color: posPnl >= 0 ? green.withValues(alpha: 0.3) : red.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -313,87 +300,91 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // Chart
-          if (_isPro)
-            GlassChartWidget(
-              symbol: _currentSymbol,
-              market: widget.market,
-              onShareToChat: (text, imageBase64) {
-                if (imageBase64 != null) {
-                  widget.chat.sendMessageWithImage(text, imageBase64);
-                } else {
-                  widget.chat.sendMessage(text);
-                }
-                widget.navigateToChat();
-              },
-            )
-          else
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: bg1,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: border),
-                boxShadow: NoahTheme.shadow(isDark),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
-                      const SizedBox(width: 8),
-                      Text('Graphique $_currentSymbol/USDT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ListenableBuilder(
-                    listenable: widget.market,
-                    builder: (_, __) {
-                      final klineData = widget.market.klines[_currentSymbol] ?? [];
-                      if (klineData.isEmpty) {
-                        return SizedBox(
-                          height: 200,
-                          child: Center(child: Text('Chargement...', style: TextStyle(fontSize: 11, color: t2))),
-                        );
-                      }
-                      return CandlestickChart(
-                        data: klineData,
-                        isDark: isDark,
-                        onShareToChat: (text, imageBase64) {
-                          if (imageBase64 != null) {
-                            widget.chat.sendMessageWithImage(text, imageBase64);
-                          } else {
-                            widget.chat.sendMessage(text);
-                          }
-                          widget.navigateToChat();
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
+          // Chart + interval selector
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bg1,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: border),
+              boxShadow: NoahTheme.shadow(isDark),
             ),
-          const SizedBox(height: 12),
-          // Order book (pro only)
-          if (_isPro)
-            ListenableBuilder(
-              listenable: widget.market,
-              builder: (_, __) {
-                final orderBids = widget.market.bids[_currentSymbol] ?? [];
-                final orderAsks = widget.market.asks[_currentSymbol] ?? [];
-                if (orderBids.isEmpty && orderAsks.isEmpty) return const SizedBox();
-                return Column(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    OrderBook(bids: orderBids, asks: orderAsks, symbol: _currentSymbol),
-                    const SizedBox(height: 12),
+                    Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(width: 8),
+                    Text('Graphique $_currentSymbol/USDT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
+                    const Spacer(),
+                    ...intervals.map((iv) {
+                      final active = widget.market.currentInterval == iv;
+                      return GestureDetector(
+                        onTap: () {
+                          widget.market.setInterval(iv);
+                          widget.market.fetchKlines(_currentSymbol, interval: iv);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: active ? accentBg : bg2,
+                            borderRadius: BorderRadius.circular(4),
+                            border: active ? Border.all(color: accentBorder) : null,
+                          ),
+                          child: Text(iv, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: active ? accent : t2)),
+                        ),
+                      );
+                    }),
                   ],
-                );
-              },
+                ),
+                const SizedBox(height: 8),
+                ListenableBuilder(
+                  listenable: widget.market,
+                  builder: (_, __) {
+                    final klineData = widget.market.klines[_currentSymbol] ?? [];
+                    if (klineData.isEmpty) {
+                      return SizedBox(
+                        height: 200,
+                        child: Center(child: Text('Chargement...', style: TextStyle(fontSize: 11, color: t2))),
+                      );
+                    }
+                    return CandlestickChart(
+                      data: klineData,
+                      isDark: isDark,
+                      onShareToChat: (text, imageBase64) {
+                        if (imageBase64 != null) {
+                          widget.chat.sendMessageWithImage(text, imageBase64);
+                        } else {
+                          widget.chat.sendMessage(text);
+                        }
+                        widget.navigateToChat();
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
-          // Strategy signal (pro only)
-          if (_isPro)
-            ListenableBuilder(
+          ),
+          const SizedBox(height: 12),
+          // Order book
+          ListenableBuilder(
+            listenable: widget.market,
+            builder: (_, __) {
+              final orderBids = widget.market.bids[_currentSymbol] ?? [];
+              final orderAsks = widget.market.asks[_currentSymbol] ?? [];
+              if (orderBids.isEmpty && orderAsks.isEmpty) return const SizedBox();
+              return Column(
+                children: [
+                  OrderBook(bids: orderBids, asks: orderAsks, symbol: _currentSymbol),
+                  const SizedBox(height: 12),
+                ],
+              );
+            },
+          ),
+          // Strategy signal
+          ListenableBuilder(
             listenable: widget.market,
             builder: (_, __) {
               final kds = widget.market.klines[_currentSymbol] ?? [];
@@ -426,7 +417,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: sigColor.withOpacity( 0.15),
+                            color: sigColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(sig.action, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: sigColor, letterSpacing: 1.2)),
@@ -461,81 +452,51 @@ class _TradeScreenState extends State<TradeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_isPro) ...[
-                  Text('Quantité', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.5)),
-                  const SizedBox(height: 5),
-                  Stack(
-                    alignment: Alignment.centerRight,
-                    children: [
-                      TextField(
-                        controller: _qtyCtrl,
-                        onChanged: (_) => setState(() {}),
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 15, fontWeight: FontWeight.w600, color: t0),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          filled: true,
-                          fillColor: bg2,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                Text('Quantité', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.5)),
+                const SizedBox(height: 5),
+                Stack(
+                  alignment: Alignment.centerRight,
+                  children: [
+                    TextField(
+                      controller: _qtyCtrl,
+                      onChanged: (_) => setState(() {}),
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 15, fontWeight: FontWeight.w600, color: t0),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        filled: true,
+                        fillColor: bg2,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Text(_currentSymbol, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t2)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [0.1, 0.25, 0.5, 0.75, 1.0].map((pct) {
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => _setPct(pct),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          decoration: BoxDecoration(
+                            color: bg2,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: borderMd),
+                          ),
+                          child: Text('${(pct * 100).toInt()}%',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t1)),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Text(_currentSymbol, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t2)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [0.1, 0.25, 0.5, 0.75, 1.0].map((pct) {
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => _setPct(pct),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            decoration: BoxDecoration(
-                              color: bg2,
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: borderMd),
-                            ),
-                            child: Text('${(pct * 100).toInt()}%',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t1)),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ] else ...[
-                  // Simple mode: preset amounts
-                  Text('Montant USDT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.5)),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [10, 50, 100, 500].map((amt) {
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            _qtyCtrl.text = (amt / _price).toStringAsFixed(6);
-                            setState(() {});
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: bg2,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: borderMd),
-                            ),
-                            child: Text('\$$amt',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: t1)),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                    );
+                  }).toList(),
+                ),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -571,17 +532,19 @@ class _TradeScreenState extends State<TradeScreen> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                // SL/TP only in pro mode
-                if (_isPro) ...[
-                  Row(
-                    children: [
-                      Expanded(child: _slTpField('SL %', _slCtrl)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _slTpField('TP %', _tpCtrl)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                // Stop Loss / Take Profit
+                Row(
+                  children: [
+                    Expanded(
+                      child: _slTpField('SL %', _slCtrl),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _slTpField('TP %', _tpCtrl),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -635,11 +598,9 @@ class _TradeScreenState extends State<TradeScreen> {
           const SizedBox(height: 10),
           // Balance bar
           _buildBalanceBar(isDark, bg1, border, t2, t0, green, red),
-          if (_isPro) ...[
-            const SizedBox(height: 12),
-            // Signals
-            _buildSignals(isDark, bg2, t0, t2, green, greenBg, greenBorder, red, redBg, redBorder, amber, amberBg, amberBorder),
-          ],
+          const SizedBox(height: 12),
+          // Signals
+          _buildSignals(isDark, bg2, t0, t2, green, greenBg, greenBorder, red, redBg, redBorder, amber, amberBg, amberBorder),
         ],
       );
     },

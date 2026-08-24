@@ -5,9 +5,8 @@ enum BlockReason { update, banned }
 class BlockingOverlay extends StatelessWidget {
   final BlockReason reason;
   final String? email;
-  final VoidCallback? onBypass;
 
-  const BlockingOverlay({super.key, required this.reason, this.email, this.onBypass});
+  const BlockingOverlay({super.key, required this.reason, this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +29,8 @@ class BlockingOverlay extends StatelessWidget {
                 height: 72,
                 decoration: BoxDecoration(
                   color: reason == BlockReason.banned
-                      ? const Color(0xFFE07060).withOpacity( 0.15)
-                      : accent.withOpacity( 0.15),
+                      ? const Color(0xFFE07060).withValues(alpha: 0.15)
+                      : accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
@@ -95,19 +94,6 @@ class BlockingOverlay extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (reason == BlockReason.update && onBypass != null) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: onBypass,
-                    child: Text(
-                      'Continuer quand même',
-                      style: TextStyle(fontSize: 12, color: t2),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

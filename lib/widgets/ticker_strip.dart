@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-import '../utils.dart';
 
 class TickerStrip extends StatelessWidget {
   final String currentSymbol;

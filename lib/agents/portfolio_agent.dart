@@ -6,53 +6,75 @@ class PortfolioAgent extends BaseAgent {
 
   @override
   AgentReport analyze(String symbol, AgentContext ctx) {
-    final totalValue = ctx.usdtBalance + ctx.positions.fold(0.0, (s, p) {
-      final price = ctx.prices[p.symbol] ?? 0;
-      return s + p.qty * price;
-    });
+    final report = StringBuffer();
+    final totalValue = ctx.usdtBalance + _positionsValue(ctx);
+    final totalCost = ctx.positions.fold(0.0, (s, p) => s + p.qty * p.entryPrice);
+    final pnl = _positionsValue(ctx) - totalCost;
+    final pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
-    final posValue = ctx.positions.fold(0.0, (s, p) {
-      final price = ctx.prices[p.symbol] ?? 0;
-      return s + p.qty * price;
-    });
+    report.writeln('**Vue du portefeuille**\n');
+    report.writeln('Solde USDT: ${fmt(ctx.usdtBalance)}');
+    report.writeln('Valeur des positions: ${fmt(_positionsValue(ctx))}');
+    report.writeln('Capital total: ${fmt(totalValue)}');
+    report.writeln('PnL réalisé + non réalisé: ${pnl >= 0 ? '+' : ''}${fmt(pnl)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toStringAsFixed(2)}%)');
 
-    final usdtRatio = totalValue > 0 ? ctx.usdtBalance / totalValue : 1.0;
+    if (ctx.positions.isEmpty) {
+      report.writeln('\nAucune position ouverte. Capital 100% en USDT.');
+    } else {
+      report.writeln('\n**Positions ouvertes**\n');
+      report.writeln('Symbole | Qté | Entrée | Actuel | PnL');
+      for (final pos in ctx.positions) {
+        final curPrice = ctx.prices[pos.symbol] ?? 0;
+        final posPnl = pos.pnl(curPrice);
+        final posPnlPct = pos.pnlPct(curPrice);
+        report.writeln('${pos.symbol} | ${pos.qty.toStringAsFixed(4)} | \$${pos.entryPrice.toStringAsFixed(2)} | \$${curPrice.toStringAsFixed(2)} | ${posPnl >= 0 ? '+' : ''}${fmt(posPnl)} (${posPnlPct >= 0 ? '+' : ''}${posPnlPct.toStringAsFixed(1)}%)');
+      }
 
-    double totalPnl = 0;
-    for (final pos in ctx.positions) {
-      final price = ctx.prices[pos.symbol] ?? 0;
-      totalPnl += pos.pnl(price);
+      // Allocation
+      report.writeln('\n**Allocation par actif**');
+      for (final pos in ctx.positions) {
+        final curPrice = ctx.prices[pos.symbol] ?? 0;
+        final posVal = pos.qty * curPrice;
+        final allocPct = totalValue > 0 ? (posVal / totalValue) * 100 : 0;
+        report.writeln('- ${pos.symbol}: ${allocPct.toStringAsFixed(1)}% du portefeuille');
+      }
+
+      // Ratio USDT / positions
+      final usdtRatio = totalValue > 0 ? (ctx.usdtBalance / totalValue) * 100 : 100;
+      report.writeln('\nUSDT: ${usdtRatio.toStringAsFixed(0)}% | Positions: ${(100 - usdtRatio).toStringAsFixed(0)}%');
+
+      if (usdtRatio < 50) {
+        report.writeln('\n⚠ Faible réserve USDT — Exposition élevée. Envisager de réduire les positions ou déposer des fonds.');
+      }
     }
 
-    final summary = StringBuffer('Analyse portefeuille\n');
-    summary.writeln('Capital USDT: \$${ctx.usdtBalance.toStringAsFixed(2)}');
-    summary.writeln('Valeur positions: \$${posValue.toStringAsFixed(2)}');
-    summary.writeln('Valeur totale: \$${totalValue.toStringAsFixed(2)}');
-    summary.writeln('Exposition USDT: ${(usdtRatio * 100).toStringAsFixed(0)}%');
-    summary.writeln('Positions: ${ctx.positions.length}');
-
-    String rec;
-    if (usdtRatio > 0.7) {
-      rec = 'UNDER_INVESTED';
-    } else if (usdtRatio < 0.2) {
-      rec = 'OVER_EXPOSED';
-    } else {
-      rec = 'BALANCED';
+    // Derniers trades
+    if (ctx.history.isNotEmpty) {
+      report.writeln('\n**Dernières transactions**');
+      for (final t in ctx.history.take(5)) {
+        report.writeln('- ${t.side.toUpperCase()} ${t.qty.toStringAsFixed(4)} ${t.symbol} @ ${fmt(t.price)}');
+      }
     }
 
     return AgentReport(
       agentName: name,
-      confidence: 0.8,
-      summary: summary.toString(),
-      recommendation: rec,
+      confidence: totalValue > 0 ? 0.9 : 0.5,
+      summary: report.toString(),
       details: {
-        'totalValue': totalValue,
-        'positionsValue': posValue,
         'usdtBalance': ctx.usdtBalance,
-        'usdtRatio': usdtRatio,
-        'pnl': totalPnl,
-        'positionCount': ctx.positions.length,
+        'positionsValue': _positionsValue(ctx),
+        'totalValue': totalValue,
+        'pnl': pnl,
+        'pnlPct': pnlPct,
+        'openPositions': ctx.positions.length,
       },
     );
+  }
+
+  double _positionsValue(AgentContext ctx) {
+    return ctx.positions.fold(0.0, (s, p) {
+      final price = ctx.prices[p.symbol] ?? 0;
+      return s + p.qty * price;
+    });
   }
 }

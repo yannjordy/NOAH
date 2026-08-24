@@ -322,17 +322,17 @@ Règles:
     if (circuitBreaker) {
       finalAction = 'HOLD';
       finalScore = 0.0;
-    } else if (riskScore > 0.7) {
+    } else if (riskScore > 0.5) {
       finalAction = 'HOLD';
       finalScore = min(finalScore, 0.3);
-    } else if (riskScore > 0.3) {
+    } else if (riskScore > 0.2) {
       finalScore *= (1.0 - riskScore);
-      if (marketScore > 0.53) finalAction = 'BUY';
-      else if (marketScore < 0.47) finalAction = 'SELL';
+      if (marketScore > 0.55) finalAction = 'BUY';
+      else if (marketScore < 0.45) finalAction = 'SELL';
       else finalAction = 'HOLD';
     } else {
-      if (marketScore > 0.52) finalAction = 'BUY';
-      else if (marketScore < 0.48) finalAction = 'SELL';
+      if (marketScore > 0.6) finalAction = 'BUY';
+      else if (marketScore < 0.4) finalAction = 'SELL';
       else finalAction = 'HOLD';
     }
 

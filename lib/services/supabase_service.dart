@@ -1,194 +1,179 @@
-import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import '../models/models.dart';
 
 class SupabaseService {
   static const _url = 'https://dimnepbasmswqmexlhvs.supabase.co';
   static const _anonKey = 'sb_publishable_LzS7Y7L3vjno6yS54w1LkA_KAAxdeBO';
 
-  late final SupabaseClient _client;
-  User? _user;
-  StreamSubscription<AuthState>? _authSub;
+  sb.SupabaseClient get client => sb.Supabase.instance.client;
 
   Future<void> init() async {
-    await Supabase.initialize(url: _url, anonKey: _anonKey);
-    _client = Supabase.instance.client;
-    _user = _client.auth.currentUser;
+    await sb.Supabase.initialize(url: _url, anonKey: _anonKey);
   }
 
-  bool get isLoggedIn => _user != null;
-  String? get userEmail => _user?.email;
+  bool get isLoggedIn => client.auth.currentUser != null;
+  String? get userEmail => client.auth.currentUser?.email;
 
-  SupabaseClient get client => _client;
-
-  User? get user => _user;
-
-  Stream<AuthState> get onAuthStateChange => _client.auth.onAuthStateChange;
-  Stream<AuthState> get onAuthChange => _client.auth.onAuthStateChange;
-
-  void listenAuth(void Function(User?) onChange) {
-    _authSub?.cancel();
-    _authSub = _client.auth.onAuthStateChange.listen((state) {
-      _user = state.session?.user;
-      onChange(_user);
-    });
-  }
-
-  void dispose() {
-    _authSub?.cancel();
-  }
-
-  Future<bool> signUp(String email, String password, [String? name]) async {
+  Future<bool> signUp(String email, String password, String name) async {
     try {
-      final res = await _client.auth.signUp(
-        email: email,
-        password: password,
-        data: name != null ? {'name': name} : null,
-      );
-      _user = res.user;
-      return res.user != null;
-    } catch (_) {
-      return false;
+      final res = await client.auth.signUp(email: email, password: password, data: {'name': name});
+      if (res.session != null) return true;
+      // Email confirmation required — try to sign in anyway (some Supabase configs auto-confirm)
+      try {
+        await client.auth.signInWithPassword(email: email, password: password);
+        return client.auth.currentUser != null;
+      } catch (_) {
+        // Email not confirmed yet — return true so app can create local account
+        return true;
+      }
+    } catch (e) {
+      // If signup fails (e.g. user already exists), try sign in
+      try {
+        await client.auth.signInWithPassword(email: email, password: password);
+        return client.auth.currentUser != null;
+      } catch (_) {
+        rethrow;
+      }
     }
   }
 
-  Future<bool> signInWithPassword(String email, String password) async {
-    return signIn(email, password);
+  Future<void> signInWithPassword(String email, String password) async {
+    await client.auth.signInWithPassword(email: email, password: password);
   }
 
-  Future<bool> signIn(String email, String password) async {
-    try {
-      final res = await _client.auth.signInWithPassword(email: email, password: password);
-      _user = res.user;
-      return res.session != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> signOut() async {
-    await _client.auth.signOut();
-    _user = null;
+  Future<void> signIn(String email, String password) async {
+    await client.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<void> sendOtp(String email) async {
-    await _client.auth.signInWithOtp(email: email);
+    await client.auth.signInWithOtp(email: email);
   }
 
-  Future<bool> verifyOtp(String email, String token) async {
-    try {
-      final res = await _client.auth.verifyOTP(
-        email: email,
-        token: token,
-        type: OtpType.magiclink,
-      );
-      _user = res.user;
-      return res.session != null;
-    } catch (_) {
-      return false;
-    }
+  Stream<sb.AuthState> get onAuthChange => client.auth.onAuthStateChange;
+
+  Future<void> verifyOtp(String email, String token) async {
+    await client.auth.verifyOTP(email: email, token: token, type: sb.OtpType.email);
   }
 
-  Future<void> resetPassword(String email) async {
-    await _client.auth.resetPasswordForEmail(email);
+  Future<void> signOut() async {
+    await client.auth.signOut();
   }
 
-  Future<bool> verifyForgotPasswordOtp(String email, String token) async {
-    try {
-      final res = await _client.auth.verifyOTP(
-        email: email,
-        token: token,
-        type: OtpType.recovery,
-      );
-      _user = res.user;
-      return res.session != null;
-    } catch (_) {
-      return false;
-    }
+  Future<void> upsertProfile(String email, String name, String passwordHash,
+      {bool? termsAccepted, bool? isDemo}) async {
+    final data = <String, dynamic>{
+      'email': email,
+      'name': name,
+      'password_hash': passwordHash,
+    };
+    if (termsAccepted != null) data['terms_accepted'] = termsAccepted;
+    if (isDemo != null) data['is_demo'] = isDemo;
+    await client.from('profiles').upsert(data, onConflict: 'email');
   }
 
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    if (_user == null) return null;
-    try {
-      final data = await _client
-          .from('profiles')
-          .select()
-          .eq('id', _user!.id)
-          .maybeSingle();
-      return data;
-    } catch (_) {
-      return null;
-    }
+  Future<Map<String, dynamic>?> getProfile(String email) async {
+    final res = await client.from('profiles').select().eq('email', email).maybeSingle();
+    return res;
   }
 
-  Future<void> updateProfile(Map<String, dynamic> updates) async {
-    if (_user == null) return;
-    await _client.from('profiles').upsert({
-      'id': _user!.id,
-      ...updates,
+  Future<void> saveWallet(String email, double usdt, double initialUsdt, double totalDeposits) async {
+    await client.from('wallet').upsert({
+      'user_email': email,
+      'usdt': usdt,
+      'initial_usdt': initialUsdt,
+      'total_deposits': totalDeposits,
+    }, onConflict: 'user_email');
+  }
+
+  Future<Map<String, dynamic>?> getWallet(String email) async {
+    return client.from('wallet').select().eq('user_email', email).maybeSingle();
+  }
+
+  Future<void> savePositions(String email, List<Position> positions) async {
+    await client.from('positions').delete().eq('user_email', email);
+    if (positions.isEmpty) return;
+    final rows = positions.map((p) => {
+      'user_email': email,
+      'symbol': p.sym,
+      'qty': p.qty,
+      'entry_price': p.entry,
+      'stop_loss': p.stopLoss,
+      'take_profit': p.takeProfit,
+    }).toList();
+    await client.from('positions').insert(rows);
+  }
+
+  Future<List<Map<String, dynamic>>> getPositions(String email) async {
+    final res = await client.from('positions').select().eq('user_email', email);
+    return res;
+  }
+
+  Future<void> addTrade(String email, TradeOrder trade) async {
+    await client.from('trade_history').insert({
+      'user_email': email,
+      'side': trade.side,
+      'symbol': trade.sym,
+      'qty': trade.qty,
+      'price': trade.price,
+      'pnl': trade.pnl,
     });
   }
 
-  Future<List<Map<String, dynamic>>> query(String table, {
-    String? select,
-    Map<String, dynamic>? filters,
-    String? orderColumn,
-    bool ascending = false,
-    int? limit,
-  }) async {
-    dynamic query = _client.from(table).select(select ?? '*');
-    if (filters != null) {
-      for (final entry in filters.entries) {
-        query = query.eq(entry.key, entry.value);
-      }
-    }
-    if (orderColumn != null) {
-      query = query.order(orderColumn, ascending: ascending);
-    }
-    if (limit != null) {
-      query = query.limit(limit);
-    }
-    return await query;
+  Future<List<Map<String, dynamic>>> getTradeHistory(String email, {int limit = 100}) async {
+    final res = await client.from('trade_history')
+        .select()
+        .eq('user_email', email)
+        .order('time', ascending: false)
+        .limit(limit);
+    return res;
   }
 
-  Future<void> insert(String table, Map<String, dynamic> data) async {
-    await _client.from(table).insert(data);
+  Future<void> addWalletTransaction(String email, WalletTransaction tx) async {
+    await client.from('wallet_transactions').insert({
+      'user_email': email,
+      'type': tx.type,
+      'amount': tx.amount,
+      'label': tx.label,
+    });
   }
 
-  Future<void> update(String table, Map<String, dynamic> data, {
-    required Map<String, dynamic> match,
-  }) async {
-    dynamic query = _client.from(table).update(data);
-    for (final entry in match.entries) {
-      query = query.eq(entry.key, entry.value);
-    }
-    await query;
+  Future<List<Map<String, dynamic>>> getWalletTransactions(String email) async {
+    final res = await client.from('wallet_transactions')
+        .select()
+        .eq('user_email', email)
+        .order('created_at', ascending: false);
+    return res;
   }
 
-  Future<void> delete(String table, {
-    required Map<String, dynamic> match,
-  }) async {
-    dynamic query = _client.from(table).delete();
-    for (final entry in match.entries) {
-      query = query.eq(entry.key, entry.value);
-    }
-    await query;
+  Future<void> saveApiConnection(String email, String model, String apiKey, String apiUrl) async {
+    await client.from('api_connections').upsert({
+      'user_email': email,
+      'model_name': model,
+      'api_key_encrypted': apiKey,
+      'api_url': apiUrl,
+      'is_active': true,
+    }, onConflict: 'user_email,model_name');
   }
 
-  Stream<List<Map<String, dynamic>>> subscribe(String table, {
-    String? filter,
-  }) {
-    return _client.from(table).stream(primaryKey: ['id']);
+  Future<List<Map<String, dynamic>>> getApiConnections(String email) async {
+    final res = await client.from('api_connections')
+        .select()
+        .eq('user_email', email)
+        .eq('is_active', true);
+    return res;
   }
 
-  Future<bool> isBanned(String? email) async {
-    if (email == null) return false;
+  Future<void> deleteApiConnection(String email, String model) async {
+    await client.from('api_connections')
+        .delete()
+        .eq('user_email', email)
+        .eq('model_name', model);
+  }
+
+  Future<bool> isBanned(String email) async {
     try {
-      final data = await _client
-          .from('banned_users')
-          .select()
-          .eq('email', email)
-          .limit(1);
-      return data.isNotEmpty;
+      final res = await client.from('profiles').select('banned').eq('email', email).maybeSingle();
+      return res?['banned'] == true;
     } catch (_) {
       return false;
     }
@@ -196,54 +181,31 @@ class SupabaseService {
 
   Future<String?> getMinVersion() async {
     try {
-      final data = await _client
-          .from('app_config')
-          .select('min_version')
-          .eq('key', 'version')
-          .limit(1);
-      if (data.isNotEmpty) {
-        return data.first['min_version'] as String?;
-      }
-      return null;
+      final res = await client.from('app_config').select('value').eq('key', 'min_version').maybeSingle();
+      return res?['value'] as String?;
     } catch (_) {
       return null;
     }
   }
 
-  Future<void> saveWallet(String email, double usdt, double initialUsdt, double totalDeposits) async {
-    try {
-      await _client.from('wallets').upsert({
-        'email': email,
-        'usdt': usdt,
-        'initial_usdt': initialUsdt,
-        'total_deposits': totalDeposits,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {}
+  Future<void> saveChatSessions(String email, List<ChatSession> sessions) async {
+    await client.from('chat_sessions').delete().eq('user_email', email);
+    if (sessions.isEmpty) return;
+    final rows = sessions.map((s) => {
+      'id': s.id,
+      'user_email': email,
+      'title': s.title,
+      'date': s.date,
+      'msgs_json': s.toJson()['msgs'],
+    }).toList();
+    await client.from('chat_sessions').insert(rows);
   }
 
-  Future<void> savePositions(String email, List<dynamic> positions) async {
-    try {
-      await _client.from('positions').upsert({
-        'email': email,
-        'positions': positions.map((p) => p.toJson()).toList(),
-        'updated_at': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {}
-  }
-
-  Future<void> addTrade(String email, dynamic trade) async {
-    try {
-      await _client.from('trades').insert({
-        'email': email,
-        'side': trade.side,
-        'symbol': trade.sym,
-        'qty': trade.qty,
-        'price': trade.price,
-        'pnl': trade.pnl,
-        'time': trade.time,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {}
+  Future<List<Map<String, dynamic>>> getChatSessions(String email) async {
+    final res = await client.from('chat_sessions')
+        .select()
+        .eq('user_email', email)
+        .order('date', ascending: false);
+    return res;
   }
 }

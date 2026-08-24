@@ -1,7 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/noah_theme.dart';
-import '../theme/glass_theme.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -38,76 +36,68 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           // Description card
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bg1.withOpacity( isDark ? 0.5 : 0.6),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: border),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: bg1,
+                borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: border),
+              boxShadow: NoahTheme.shadow(isDark),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    style: TextStyle(fontSize: 13, height: 1.7, color: t1),
+                    children: [
+                      TextSpan(text: 'NOAH', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
+                      const TextSpan(text: ' est votre copilote de trading IA. Conçu pour être aussi '),
+                      TextSpan(text: 'simple que WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
+                      const TextSpan(text: ', aussi '),
+                      TextSpan(text: 'élégant que Claude', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
+                      const TextSpan(text: ', aussi '),
+                      TextSpan(text: 'puissant que TradingView', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
+                      const TextSpan(text: ', aussi '),
+                      TextSpan(text: 'sécurisé qu\'un système bancaire', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
+                      const TextSpan(text: '.'),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        style: TextStyle(fontSize: 13, height: 1.7, color: t1),
-                        children: [
-                          TextSpan(text: 'NOAH', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
-                          const TextSpan(text: ' est votre copilote de trading IA. Conçu pour être aussi '),
-                          TextSpan(text: 'simple que WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
-                          const TextSpan(text: ', aussi '),
-                          TextSpan(text: 'élégant que Claude', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
-                          const TextSpan(text: ', aussi '),
-                          TextSpan(text: 'puissant que TradingView', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
-                          const TextSpan(text: ', aussi '),
-                          TextSpan(text: 'sécurisé qu\'un système bancaire', style: TextStyle(fontWeight: FontWeight.bold, color: t0)),
-                          const TextSpan(text: '.'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16)),
-                      child: Text(
-                        'Notre mission : donner à chaque trader un assistant IA qui comprend les marchés, respecte le capital et prend des décisions éclairées — sans bruit, sans émotion, sans compromis.',
-                        style: TextStyle(fontSize: 12, color: t2, height: 1.7),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Center(
-                      child: Text(
-                        '"Calme. Précis. Analytique. Premium."',
-                        style: TextStyle(
-                          fontFamily: 'PlayfairDisplay',
-                          fontStyle: FontStyle.italic,
-                          fontSize: 14,
-                          color: accent,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16)),
+                  child: Text(
+                    'Notre mission : donner à chaque trader un assistant IA qui comprend les marchés, respecte le capital et prend des décisions éclairées — sans bruit, sans émotion, sans compromis.',
+                    style: TextStyle(fontSize: 12, color: t2, height: 1.7),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 14),
+                Center(
+                  child: Text(
+                    '"Calme. Précis. Analytique. Premium."',
+                    style: TextStyle(
+                      fontFamily: 'PlayfairDisplay',
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                      color: accent,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
           // System info card
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bg1.withOpacity( isDark ? 0.5 : 0.6),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: border),
-                ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: bg1,
+                borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: border),
+              boxShadow: NoahTheme.shadow(isDark),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -126,8 +116,6 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
         ],
       ),
     );

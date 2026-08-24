@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../providers/providers.dart';
 import '../theme/noah_theme.dart';
-import '../widgets/glass_portfolio_charts.dart';
-import '../theme/glass_theme.dart';
-import '../utils.dart';
 
 class PortfolioScreen extends StatelessWidget {
   final PortfolioProvider portfolio;
@@ -65,7 +62,7 @@ class PortfolioScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: amberBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: amber.withOpacity( 0.3)),
+                  border: Border.all(color: amber.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -248,35 +245,6 @@ class PortfolioScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              // Equity curve
-              GlassEquityCurve(
-                dailyReturns: data.dailyReturns,
-                initialCapital: data.totalDeposits > 0 ? data.totalDeposits : data.initialUsdt,
-                currentCapital: totalVal,
-              ),
-              const SizedBox(height: 10),
-              // Pie chart allocation
-              GlassTheme.cardFlat(
-                context: context,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
-                        const SizedBox(width: 8),
-                        Text('Répartition', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    GlassPieChart(
-                      segments: segs.map((s) => (label: s.label, value: s.val, color: s.c)).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
               // Positions
               ...data.positions.map((pos) => _positionCard(context, pos, isDark, bg1, bg2, bg3, border, t0, t2, green, greenBg, red, redBg, accent)),
               const SizedBox(height: 10),
@@ -399,7 +367,7 @@ class PortfolioScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(t.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t0)),
-                Text(t.time.toString(), style: TextStyle(fontSize: 9, color: t2)),
+                Text(t.time, style: TextStyle(fontSize: 9, color: t2)),
               ],
             ),
           ),
@@ -414,65 +382,76 @@ class PortfolioScreen extends StatelessWidget {
 
   void _showDepositDialog(BuildContext context, PortfolioProvider portfolio, bool isDark, Color bg1, Color bg2, Color borderMd, Color accent, Color t0, Color t2) {
     final ctrl = TextEditingController(text: '1000');
-    GlassTheme.showModal(
+    showModalBottomSheet(
       context: context,
-      title: 'Dépôt fictif',
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Ajoutez de l\'argent fictif à votre portefeuille de démonstration.',
-                style: TextStyle(fontSize: 11, color: t2)),
-            const SizedBox(height: 12),
-            Row(
-              children: [100, 500, 1000, 5000].map((v) {
-                return Expanded(
-                  child: GlassTheme.button(
-                    context: context,
-                    onTap: () => ctrl.text = v.toString(),
-                    child: Text('${v}\$', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: accent)),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: bg2.withOpacity( 0.5),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: borderMd),
+      backgroundColor: bg1,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(width: 30, height: 3, decoration: BoxDecoration(color: t2.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 12),
+              Text('Dépôt fictif', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: t0)),
+              const SizedBox(height: 3),
+              Text('Ajoutez de l\'argent fictif à votre portefeuille de démonstration.',
+                  style: TextStyle(fontSize: 11, color: t2)),
+              const SizedBox(height: 12),
+              Row(
+                children: [100, 500, 1000, 5000].map((v) {
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        ctrl.text = v.toString();
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderMd)),
+                        child: Text('${v}\$', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: accent)),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
-              child: TextField(
-                controller: ctrl,
-                keyboardType: TextInputType.number,
-                style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 14, fontWeight: FontWeight.w600, color: t0),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  isCollapsed: true,
-                  prefixText: '\$ ',
-                  prefixStyle: TextStyle(fontSize: 14, color: t2),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderMd)),
+                child: TextField(
+                  controller: ctrl,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 14, fontWeight: FontWeight.w600, color: t0),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    isCollapsed: true,
+                    prefixText: '\$ ',
+                    prefixStyle: TextStyle(fontSize: 14, color: t2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            GlassTheme.button(
-              context: context,
-              isPrimary: true,
-              onTap: () {
-                final amt = double.tryParse(ctrl.text) ?? 0;
-                if (amt > 0) {
-                  portfolio.deposit(amt);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Ajouter les fonds', textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () {
+                  final amt = double.tryParse(ctrl.text) ?? 0;
+                  if (amt > 0) {
+                    portfolio.deposit(amt);
+                    Navigator.pop(ctx);
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(24)),
+                  child: Text('Ajouter les fonds', textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -698,7 +677,7 @@ class PortfolioScreen extends StatelessWidget {
                       children: [
                         Container(
                           width: 32, height: 32,
-                          decoration: BoxDecoration(color: accent.withOpacity( 0.15), borderRadius: BorderRadius.circular(20)),
+                          decoration: BoxDecoration(color: accent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
                           child: Center(child: Text(pos.sym.substring(0, 3), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: accent))),
                         ),
                         const SizedBox(width: 10),
@@ -854,7 +833,7 @@ class _SparklinePainter extends CustomPainter {
     final grad = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [color.withOpacity( 0.15), color.withOpacity( 0.0)],
+      colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.0)],
     );
     canvas.drawPath(path, Paint()..shader = grad.createShader(Rect.fromLTWH(0, 0, size.width, size.height)));
 

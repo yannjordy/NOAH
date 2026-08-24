@@ -1,18 +1,36 @@
 import 'dart:async';
 
-class NotificationEvent {
+enum NotificationType { trade, signal, risk, system }
+
+class AppNotification {
+  final String id;
   final String title;
   final String body;
-  final String? tag;
-  NotificationEvent({required this.title, required this.body, this.tag});
+  final NotificationType type;
+  final DateTime time;
+
+  AppNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.type = NotificationType.system,
+    DateTime? time,
+  }) : time = time ?? DateTime.now();
 }
 
 class NotificationStream {
+  NotificationStream._();
   static final _instance = NotificationStream._();
   static NotificationStream get instance => _instance;
-  NotificationStream._();
 
-  final _controller = StreamController<NotificationEvent>.broadcast();
-  Stream<NotificationEvent> get stream => _controller.stream;
-  void add(NotificationEvent event) => _controller.add(event);
+  final _controller = StreamController<AppNotification>.broadcast();
+  Stream<AppNotification> get stream => _controller.stream;
+
+  void push(AppNotification notif) {
+    _controller.add(notif);
+  }
+
+  void dispose() {
+    _controller.close();
+  }
 }

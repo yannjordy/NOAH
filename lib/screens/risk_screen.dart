@@ -1,9 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../providers/providers.dart';
 import '../theme/noah_theme.dart';
-import '../theme/glass_theme.dart';
 
 class RiskScreen extends StatelessWidget {
   final RiskProvider risk;
@@ -22,14 +20,14 @@ class RiskScreen extends StatelessWidget {
     final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
     final borderMd = isDark ? const Color(0x17FFFFFF) : const Color(0x1A000000);
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
-    final accentBg = accent.withOpacity( 0.1);
+    final accentBg = accent.withValues(alpha: 0.1);
     final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
     final green = isDark ? const Color(0xFF4CAF8E) : const Color(0xFF2E7D5E);
-    final greenBg = green.withOpacity( 0.1);
+    final greenBg = green.withValues(alpha: 0.1);
     final red = isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A);
-    final redBg = red.withOpacity( 0.1);
+    final redBg = red.withValues(alpha: 0.1);
 
     final rm = portfolio.riskManager;
     final perf = portfolio.analyzer;
@@ -58,7 +56,7 @@ class RiskScreen extends StatelessWidget {
                   onTap: () => portfolio.resetCircuitBreaker(),
                   child: Container(
                     width: 60, height: 60,
-                    decoration: BoxDecoration(color: redBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: red.withOpacity( 0.3))),
+                    decoration: BoxDecoration(color: redBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: red.withValues(alpha: 0.3))),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -152,9 +150,9 @@ class RiskScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity( 0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +167,7 @@ class RiskScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Container(
             height: 4,
-            decoration: BoxDecoration(color: bg1.withOpacity( 0.3), borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: bg1.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: fill.clamp(0.0, 1.0),
@@ -201,38 +199,33 @@ class RiskScreen extends StatelessWidget {
   }
 
   Widget _section(String title, Color bg1, Color border, Color accent, Color t2, bool isDark, List<Widget> children) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: bg1.withOpacity( isDark ? 0.5 : 0.6),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bg1,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: border),
+        boxShadow: NoahTheme.shadow(isDark),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(width: 8),
-                  Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ...children,
+              Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 8),
+              Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          ...children,
+        ],
       ),
     );
   }
 
   Widget _sectionLine(Color bg3) {
-    return Container(height: 1, color: bg3.withOpacity( 0.3), margin: const EdgeInsets.symmetric(vertical: 4));
+    return Container(height: 1, color: bg3.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(vertical: 4));
   }
 
   Widget _riskSlider(String label, String value, double val, double min, double max, Color valColor, Color bg3, Color t0, Color t2, ValueChanged<double> onChanged) {
@@ -261,7 +254,7 @@ class RiskScreen extends StatelessWidget {
               activeTrackColor: valColor,
               inactiveTrackColor: bg3,
               thumbColor: valColor,
-              overlayColor: valColor.withOpacity( 0.1),
+              overlayColor: valColor.withValues(alpha: 0.1),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
             ),
             child: Slider(value: val, min: min, max: max, onChanged: onChanged),

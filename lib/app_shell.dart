@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
@@ -26,7 +25,6 @@ import 'screens/portfolio_screen.dart';
 import 'screens/risk_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/about_screen.dart';
-import 'screens/backtest_screen.dart';
 import 'widgets/notification_bar.dart';
 import 'widgets/notification_overlay.dart';
 import 'widgets/blocking_overlay.dart';
@@ -188,18 +186,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   }
 
   Future<void> _authenticateBiometric() async {
-    if (kIsWeb) {
-      setState(() => _isLocked = false);
-      BackgroundService.start();
-      return;
-    }
     try {
       final localAuth = LocalAuthentication();
       final canBiometric = await localAuth.canCheckBiometrics;
       final isSupported = await localAuth.isDeviceSupported();
       if (!canBiometric && !isSupported) {
         setState(() => _isLocked = false);
-        BackgroundService.start();
         return;
       }
       final didAuthenticate = await localAuth.authenticate(
@@ -212,7 +204,6 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       }
     } catch (_) {
       setState(() => _isLocked = false);
-      BackgroundService.start();
     }
   }
 
@@ -224,7 +215,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   void _runAgentCycle() {
     final isOpenCode = _chat.currentModel.startsWith('opencode/');
     final scanCooldown = isOpenCode ? const Duration(seconds: 30) : const Duration(seconds: 5);
-    const cooldown = Duration(seconds: 10);
+    const cooldown = Duration(seconds: 30);
 
     // Network stability check: skip trading if data is stale
     if (!isDataFresh(maxAgeSeconds: 30)) {
@@ -293,12 +284,12 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
 
     for (final sym in symbols) {
       final lastTrade = _lastTradeTime[sym];
-      if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
+      if (lastTrade != null && DateTime.now().difference(lastTrade) < const Duration(seconds: 30)) continue;
 
       final ctx = _buildAgentContext(sym);
       final riskReport = RiskAgent().analyze(sym, ctx);
       if (riskReport.details['circuitBreaker'] as bool? ?? false) continue;
-      if ((riskReport.details['riskScore'] as double? ?? 0) > 0.8) continue;
+      if ((riskReport.details['riskScore'] as double? ?? 0) > 0.7) continue;
 
       // Use AI-powered analysis when OpenCode brain is available
       if (_mainAgent.hasBrain && _chat.currentModel.startsWith('opencode/')) {
@@ -389,11 +380,10 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
 
     final totalValue = _portfolio.data.totalValue;
     final locked = _portfolio.data.totalDeposits;
-    if (locked <= 0) return _portfolio.data.usdt;
     final profit = totalValue - locked;
     final needed = locked * (threshold / 100);
     final surplus = profit - needed;
-    if (surplus <= 0) return _portfolio.data.usdt * 0.5;
+    if (surplus <= 0) return 0;
     return surplus.clamp(0, _portfolio.data.usdt);
   }
 
@@ -558,10 +548,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
     if (_auth.needsUpdate) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: BlockingOverlay(
-          reason: BlockReason.update,
-          onBypass: () => setState(() => _auth.bypassUpdate()),
-        ),
+        home: BlockingOverlay(reason: BlockReason.update),
       );
     }
     if (_auth.banned) {
@@ -576,7 +563,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
     if (_isLocked) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: _BiometricLockScreen(onUnlock: _authenticateBiometric, storage: widget.storage),
+        home: _BiometricLockScreen(onUnlock: _authenticateBiometric),
       );
     }
 
@@ -639,7 +626,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                                 animation: _overlayCtrl,
                                 builder: (context, _) {
                                   return Container(
-                                    color: Colors.black.withOpacity( 0.5 * _overlayAnim.value),
+                                    color: Colors.black.withValues(alpha: 0.5 * _overlayAnim.value),
                                   );
                                 },
                               ),
@@ -672,7 +659,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                         Positioned.fill(
                           child: GestureDetector(
                             onTap: _closeLogin,
-                            child: Container(color: Colors.black.withOpacity( 0.45)),
+                            child: Container(color: Colors.black.withValues(alpha: 0.45)),
                           ),
                         ),
                       if (_loginOpen)
@@ -763,7 +750,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: isLive ? const Color(0xFF4CAF8E) : isSimu ? const Color(0xFFD4A84B) : const Color(0xFF6C6C6C),
-                                  boxShadow: isLive ? [BoxShadow(color: const Color(0xFF4CAF8E).withOpacity( 0.6), blurRadius: 4, spreadRadius: 1)] : null,
+                                  boxShadow: isLive ? [BoxShadow(color: const Color(0xFF4CAF8E).withValues(alpha: 0.6), blurRadius: 4, spreadRadius: 1)] : null,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -847,11 +834,9 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       case 5:
         return RiskScreen(risk: _risk, portfolio: _portfolio);
       case 6:
-        return SettingsScreen(settings: _settings, risk: _risk, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: () => _openLogin(0));
+        return SettingsScreen(settings: _settings, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin);
       case 7:
         return const AboutScreen();
-      case 8:
-        return BacktestScreen(portfolio: _portfolio, market: _market);
       default:
         return CoreScreen(chat: _chat, goTab: _goTab);
     }
@@ -889,7 +874,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(topX1, topY1),
       Offset(topX2, topY2),
-      basePaint..color = basePaint.color.withOpacity( 1.0),
+      basePaint..color = basePaint.color.withValues(alpha: 1.0),
     );
 
     // Mid line: fades out
@@ -897,7 +882,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(cx - 9, cy),
       Offset(cx + 9, cy),
-      basePaint..color = basePaint.color.withOpacity( midOpacity),
+      basePaint..color = basePaint.color.withValues(alpha: midOpacity),
     );
 
     // Bottom line: rotate from 0 to -45deg around center, translateY from +5 to 0
@@ -911,7 +896,7 @@ class _HamburgerPainter extends CustomPainter {
     canvas.drawLine(
       Offset(botX1, botY1),
       Offset(botX2, botY2),
-      basePaint..color = basePaint.color.withOpacity( 1.0),
+      basePaint..color = basePaint.color.withValues(alpha: 1.0),
     );
   }
 
@@ -923,8 +908,7 @@ class _HamburgerPainter extends CustomPainter {
 
 class _BiometricLockScreen extends StatefulWidget {
   final VoidCallback onUnlock;
-  final StorageService storage;
-  const _BiometricLockScreen({required this.onUnlock, required this.storage});
+  const _BiometricLockScreen({required this.onUnlock});
 
   @override
   State<_BiometricLockScreen> createState() => _BiometricLockScreenState();
@@ -955,15 +939,19 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
       _loading = true;
       _error = null;
     });
-    final stored = widget.storage.getAdminPassword();
-    if (stored == pin) {
-      widget.onUnlock();
-    } else {
-      setState(() {
-        _loading = false;
-        _error = 'Mot de passe incorrect';
-      });
-    }
+    // Read admin password from storage
+    final storage = StorageService();
+    storage.init().then((_) {
+      final stored = storage.getAdminPassword();
+      if (stored == pin) {
+        widget.onUnlock();
+      } else {
+        setState(() {
+          _loading = false;
+          _error = 'Mot de passe incorrect';
+        });
+      }
+    });
   }
 
   @override
@@ -987,8 +975,8 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: accent.withOpacity( 0.15),
-                border: Border.all(color: accent.withOpacity( 0.3)),
+                color: accent.withValues(alpha: 0.15),
+                border: Border.all(color: accent.withValues(alpha: 0.3)),
               ),
               child: Icon(Icons.fingerprint, size: 44, color: accent),
             ),
@@ -1048,12 +1036,12 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
             const SizedBox(height: 20),
             Row(
               children: [
-                Expanded(child: Divider(color: t2.withOpacity( 0.3))),
+                Expanded(child: Divider(color: t2.withValues(alpha: 0.3))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text('ou', style: TextStyle(fontSize: 11, color: t2)),
                 ),
-                Expanded(child: Divider(color: t2.withOpacity( 0.3))),
+                Expanded(child: Divider(color: t2.withValues(alpha: 0.3))),
               ],
             ),
             const SizedBox(height: 16),
@@ -1062,9 +1050,9 @@ class _BiometricLockScreenState extends State<_BiometricLockScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: accent.withOpacity( 0.15),
+                  color: accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: accent.withOpacity( 0.3)),
+                  border: Border.all(color: accent.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
