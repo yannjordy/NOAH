@@ -198,3 +198,84 @@ class HamburgerPanel extends StatelessWidget {
                           onTap: () {
                             chatProvider.newChat();
                             onGoTab(1);
+                            onClose();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: accentBg,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: accent.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.add_comment_outlined, size: 16, color: accent),
+                                const SizedBox(width: 10),
+                                Text('Nouveau chat', style: TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w600, color: accent,
+                                )),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Footer
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: glassBorder)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: accentBg,
+                          border: Border.all(color: accent.withValues(alpha: 0.3)),
+                        ),
+                        child: Icon(Icons.person, size: 18, color: accent),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(authProvider.displayName, style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600, color: t0,
+                            )),
+                            Text(authProvider.isLoggedIn ? authProvider.displayEmail : 'Mode démo',
+                                style: TextStyle(fontSize: 11, color: t2)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _menuIcon(int index, Color color) {
+    const icons = [
+      Icons.dashboard_outlined,
+      Icons.chat_bubble_outline,
+      Icons.bar_chart_outlined,
+      Icons.wifi_outlined,
+      Icons.account_balance_wallet_outlined,
+      Icons.shield_outlined,
+      Icons.settings_outlined,
+      Icons.info_outline,
+      Icons.science_outlined,
+    ];
+    return index < icons.length ? icons[index] : Icons.circle;
+  }
+}

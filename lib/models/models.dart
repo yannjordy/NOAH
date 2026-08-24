@@ -182,4 +182,17 @@ class Position {
 
   double currentValue(String sym) => qty * (prices[sym] ?? 0);
   double pnl(String sym) => qty * ((prices[sym] ?? 0) - entry);
-  double pnlPct(String sym) => ent
+  double pnlPct(String sym) => entry > 0 ? ((prices[sym]! - entry) / entry) * 100 : 0;
+  Map<String, dynamic> toJson() => {
+    'sym': sym, 'qty': qty, 'entry': entry,
+    'stopLoss': stopLoss, 'takeProfit': takeProfit,
+    'icon': icon, 'color': color,
+  };
+  factory Position.fromJson(Map<String, dynamic> j) => Position(
+    sym: j['sym'] ?? '', qty: (j['qty'] ?? 0).toDouble(),
+    entry: (j['entry'] ?? 0).toDouble(),
+    stopLoss: j['stopLoss']?.toDouble(),
+    takeProfit: j['takeProfit']?.toDouble(),
+    icon: j['icon'], color: j['color'] ?? 'accent',
+  );
+}
