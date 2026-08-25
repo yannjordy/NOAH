@@ -269,18 +269,17 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       }
 
       for (final pos in _portfolio.data.positions) {
-        if (pos.sym == null) continue;
-        final lastTrade = _lastTradeTime[pos.sym!];
+        final lastTrade = _lastTradeTime[pos.sym];
         if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
-        final ctx = _buildAgentContext(pos.sym!);
-        _chat.getAiTradingDecision(pos.sym!, ctx).then((result) {
+        final ctx = _buildAgentContext(pos.sym);
+        _chat.getAiTradingDecision(pos.sym, ctx).then((result) {
           if (result == null || !mounted) return;
           if (result['action'] == 'SELL') {
             final sellPct = (result['positionSizePct'] as double?) ?? 50;
             final qty = pos.qty * (sellPct / 100);
             if (qty > 0) {
-              _portfolio.executeTrade('sell', qty, symbol: pos.sym!);
-              _lastTradeTime[pos.sym!] = DateTime.now();
+              _portfolio.executeTrade('sell', qty, symbol: pos.sym);
+              _lastTradeTime[pos.sym] = DateTime.now();
             }
           }
         });
@@ -394,7 +393,6 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
 
   void _executeSignals(String sym, Map<String, dynamic> result) {
     final action = result['action'] as String;
-    final confidence = result['confidence'] as double;
     final positionSizePct = result['positionSizePct'] as double;
 
     if (!_chat.tradingEnabled) return;

@@ -17,8 +17,6 @@ import '../services/deerflow_service.dart';
 import '../services/trading_api_service.dart';
 import '../services/trade_journal_service.dart';
 import '../services/ai_tools.dart';
-import '../services/market_service.dart';
-import '../services/binance_service.dart';
 import '../agents/agents.dart' hide fmt;
 import '../agents/risk_manager.dart';
 
@@ -666,8 +664,6 @@ class ChatProvider extends ChangeNotifier {
 
     final marketAgent = MarketAgent();
     final riskAgent = RiskAgent();
-    final portfolioAgent = PortfolioAgent();
-    final tradingAgent = TradingAgent();
     final macroAgent = MacroResearchAgent(thinker: _currentModel == 'noah-agent' ? null : _aiThinker());
     final backtestAgent = BacktestAgent(thinker: _currentModel == 'noah-agent' ? null : _aiThinker());
     final jordyAgent = JordyAgent();
@@ -678,8 +674,6 @@ class ChatProvider extends ChangeNotifier {
 
     final marketReport = marketAgent.analyze(symbol, ctx);
     final riskReport = riskAgent.analyze(symbol, ctx);
-    final portfolioReport = portfolioAgent.analyze(symbol, ctx);
-    final tradingReport = tradingAgent.analyze(symbol, ctx);
     final macroReport = macroAgent.analyze(symbol, ctx);
     final backtestReport = backtestAgent.analyze(symbol, ctx);
     final jordyReport = jordyAgent.analyze(symbol, ctx);
@@ -1766,24 +1760,6 @@ class PortfolioProvider extends ChangeNotifier {
   void updateTakeProfit(String sym, double? tp) {
     final pos = _data.positions.where((x) => x.sym == sym).firstOrNull;
     if (pos != null) { pos.takeProfit = tp; _persist(); notifyListeners(); }
-  }
-
-  AgentContext _buildContextFromData() {
-    return AgentContext(
-      prices: prices,
-      pcts: pcts,
-      klines: {},
-      bids: {},
-      asks: {},
-      usdtBalance: _data.usdt,
-      positions: _data.positions.map((p) => PositionSnapshot(
-        symbol: p.sym, qty: p.qty, entryPrice: p.entry,
-        stopLoss: p.stopLoss, takeProfit: p.takeProfit,
-      )).toList(),
-      history: _data.history.map((t) => TradeSnapshot(
-        side: t.side, symbol: t.sym, qty: t.qty, price: t.price, time: t.time,
-      )).toList(),
-    );
   }
 
   List<String> checkStopLosses() {

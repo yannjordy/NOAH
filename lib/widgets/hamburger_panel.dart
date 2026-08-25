@@ -33,9 +33,6 @@ class HamburgerPanel extends StatelessWidget {
     final t3 = isDark ? const Color(0xFF4A4A4A) : const Color(0xFFC8C8C8);
     final red = isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A);
     final redBg = isDark ? const Color(0x14E07060) : const Color(0x14B8453A);
-    final glassBg = isDark
-        ? const Color(0x1A1E1E1E)
-        : const Color(0x1AFFFFFF);
     final glassBorder = isDark
         ? const Color(0x22FFFFFF)
         : const Color(0x22000000);

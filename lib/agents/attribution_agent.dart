@@ -1,5 +1,4 @@
 import 'agent_base.dart';
-import '../models/models.dart' show PortfolioData;
 
 class AttributionAgent extends BaseAgent {
   @override
@@ -20,7 +19,6 @@ class AttributionAgent extends BaseAgent {
     // Per-symbol PnL
     final bySymbol = <String, double>{};
     final byDirection = <String, double>{'buy': 0, 'sell': 0};
-    final byTime = <String, int>{'morning': 0, 'afternoon': 0, 'night': 0};
     double totalPnl = 0;
 
     for (final t in trades) {

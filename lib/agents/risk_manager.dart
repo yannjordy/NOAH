@@ -22,7 +22,7 @@ class RiskManager {
   double get maxDrawdown {
     double peak = data.initialUsdt;
     double mdd = 0;
-    for (final t in data.history.reversed) {
+    for (final _ in data.history.reversed) {
       final curValue = data.usdt + data.positionsValue;
       if (curValue > peak) peak = curValue;
       final dd = (peak - curValue) / peak * 100;
@@ -32,10 +32,6 @@ class RiskManager {
   }
 
   double get currentDrawdown {
-    double peak = data.initialUsdt;
-    for (final t in data.history.reversed) {
-      final cur = (t.pnl ?? 0) > 0 ? peak : peak;
-    }
     final total = totalValue;
     if (total <= data.initialUsdt) return 0;
     return ((total - data.initialUsdt) / data.initialUsdt * 100).abs();

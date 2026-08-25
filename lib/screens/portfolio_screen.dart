@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../providers/providers.dart';
@@ -106,71 +107,84 @@ class PortfolioScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               // Disponible card
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: bg1,
-                  borderRadius: BorderRadius.circular(36),
-                  border: Border.all(color: border),
-                  boxShadow: NoahTheme.shadowMd(isDark),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Argent disponible (retirable)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: t2)),
-                        const Spacer(),
-                        // ROI badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isPortUp ? greenBg : redBg,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            '${isPortUp ? '+' : ''}${portPnlPct.toStringAsFixed(2)}% ROI',
-                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: isPortUp ? green : red),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(fmt(data.usdt), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 30, fontWeight: FontWeight.w700, color: t0, letterSpacing: -1.5)),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isPnlUp ? greenBg : redBg,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(isPnlUp ? '↑' : '↓', style: TextStyle(fontSize: 12, color: isPnlUp ? green : red)),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${isPnlUp ? '+' : ''}${fmt(pnl)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toStringAsFixed(2)}%)',
-                                style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, fontWeight: FontWeight.w700, color: isPnlUp ? green : red),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text('Total: ${fmt(totalVal)}', style: TextStyle(fontSize: 11, color: t2, fontFamily: 'JetBrainsMono')),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 44,
-                      child: CustomPaint(
-                        size: Size.infinite,
-                        painter: _SparklinePainter(dataPoints: sparkPts, isUp: isPnlUp, isDark: isDark, color: isPnlUp ? green : red),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(36),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color.fromRGBO(255, 255, 255, 0.06) : const Color.fromRGBO(0, 0, 0, 0.04),
+                      borderRadius: BorderRadius.circular(36),
+                      border: Border.all(color: border),
+                      boxShadow: NoahTheme.shadowMd(isDark),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: isPnlUp
+                            ? [const Color.fromRGBO(76, 175, 142, 0.12), const Color.fromRGBO(76, 175, 142, 0.02)]
+                            : [const Color.fromRGBO(224, 112, 96, 0.12), const Color.fromRGBO(224, 112, 96, 0.02)],
                       ),
                     ),
-                  ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('Argent disponible (retirable)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: t2)),
+                            const Spacer(),
+                            // ROI badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isPortUp ? greenBg : redBg,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                '${isPortUp ? '+' : ''}${portPnlPct.toStringAsFixed(2)}% ROI',
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: isPortUp ? green : red),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(fmt(data.usdt), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 30, fontWeight: FontWeight.w700, color: t0, letterSpacing: -1.5)),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isPnlUp ? greenBg : redBg,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(isPnlUp ? '↑' : '↓', style: TextStyle(fontSize: 12, color: isPnlUp ? green : red)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${isPnlUp ? '+' : ''}${fmt(pnl)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toStringAsFixed(2)}%)',
+                                    style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, fontWeight: FontWeight.w700, color: isPnlUp ? green : red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text('Total: ${fmt(totalVal)}', style: TextStyle(fontSize: 11, color: t2, fontFamily: 'JetBrainsMono')),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 44,
+                          child: CustomPaint(
+                            size: Size.infinite,
+                            painter: _SparklinePainter(dataPoints: sparkPts, isUp: isPnlUp, isDark: isDark, color: isPnlUp ? green : red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -225,51 +239,57 @@ class PortfolioScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               // Allocation
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bg1,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: border),
-                  boxShadow: NoahTheme.shadow(isDark),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color.fromRGBO(255, 255, 255, 0.06) : const Color.fromRGBO(0, 0, 0, 0.04),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: border),
+                      boxShadow: NoahTheme.shadow(isDark),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
-                        const SizedBox(width: 8),
-                        Text('Allocation', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
+                        Row(
+                          children: [
+                            Container(width: 3, height: 14, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(2))),
+                            const SizedBox(width: 8),
+                            Text('Allocation', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t2, letterSpacing: 1.2)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: SizedBox(
+                            height: 6,
+                            child: Row(
+                              children: segs.map((s) => Expanded(flex: s.val.toInt() + 1, child: Container(color: s.c))).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 6,
+                          children: segs.map((s) {
+                            final pct = totalVal > 0 ? (s.val / totalVal * 100) : 0.0;
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(width: 7, height: 7, decoration: BoxDecoration(color: s.c, shape: BoxShape.circle)),
+                                const SizedBox(width: 4),
+                                Text('${s.label} ${pct.toStringAsFixed(1)}%', style: TextStyle(fontSize: 11, color: t1)),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: SizedBox(
-                        height: 6,
-                        child: Row(
-                          children: segs.map((s) => Expanded(flex: s.val.toInt() + 1, child: Container(color: s.c))).toList(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 6,
-                      children: segs.map((s) {
-                        final pct = totalVal > 0 ? (s.val / totalVal * 100) : 0.0;
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(width: 7, height: 7, decoration: BoxDecoration(color: s.c, shape: BoxShape.circle)),
-                            const SizedBox(width: 4),
-                            Text('${s.label} ${pct.toStringAsFixed(1)}%', style: TextStyle(fontSize: 11, color: t1)),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -277,55 +297,61 @@ class PortfolioScreen extends StatelessWidget {
               ...data.positions.map((pos) => _positionCard(context, pos, isDark, bg1, bg2, bg3, border, t0, t2, green, greenBg, red, redBg, accent)),
               const SizedBox(height: 10),
               // USDT balance
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bg1,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: border),
-                  boxShadow: NoahTheme.shadow(isDark),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: accentBg,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: accentBorder),
-                      ),
-                      child: const Center(child: Text('\$', style: TextStyle(fontSize: 16, color: Color(0xFFB08D57)))),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color.fromRGBO(255, 255, 255, 0.06) : const Color.fromRGBO(0, 0, 0, 0.04),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: border),
+                      boxShadow: NoahTheme.shadow(isDark),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('USDT Disponible', style: TextStyle(fontSize: 11, color: t2)),
-                          Text(fmt(data.usdt), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 18, fontWeight: FontWeight.w700, color: t0)),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: accentBg,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: accentBorder),
+                          ),
+                          child: const Center(child: Text('\$', style: TextStyle(fontSize: 16, color: Color(0xFFB08D57)))),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('USDT Disponible', style: TextStyle(fontSize: 11, color: t2)),
+                              Text(fmt(data.usdt), style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 18, fontWeight: FontWeight.w700, color: t0)),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(5)),
+                          child: Text(
+                            '${totalVal > 0 ? (data.usdt / totalVal * 100).toStringAsFixed(1) : '0'}%',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2),
+                          ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(5)),
-                      child: Text(
-                        '${totalVal > 0 ? (data.usdt / totalVal * 100).toStringAsFixed(1) : '0'}%',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
               // Stats
               Row(
                 children: [
-                  _statCard('Total déposé', fmt(data.totalDeposits), t2, t0, bg2),
+                  _statCard('Total déposé', fmt(data.totalDeposits), t2, t0, bg2, isDark),
                   const SizedBox(width: 6),
-                  _statCard('ROI Total', '${portPnlPct >= 0 ? '+' : ''}${portPnlPct.toStringAsFixed(2)}%', t2, isPortUp ? green : red, bg2),
+                  _statCard('ROI Total', '${portPnlPct >= 0 ? '+' : ''}${portPnlPct.toStringAsFixed(2)}%', t2, isPortUp ? green : red, bg2, isDark),
                   const SizedBox(width: 6),
-                  _statCard('Positions', '${data.positions.length}', t2, t0, bg2),
+                  _statCard('Positions', '${data.positions.length}', t2, t0, bg2, isDark),
                 ],
               ),
               const SizedBox(height: 14),
@@ -357,17 +383,26 @@ class PortfolioScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(String label, String value, Color t2, Color valColor, Color bg2) {
+  Widget _statCard(String label, String value, Color t2, Color valColor, Color bg2, bool isDark) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(color: bg2, borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          children: [
-            Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
-            const SizedBox(height: 3),
-            Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, fontWeight: FontWeight.w700, color: valColor)),
-          ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color.fromRGBO(255, 255, 255, 0.06) : const Color.fromRGBO(0, 0, 0, 0.04),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Text(label, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: t2, letterSpacing: 0.4)),
+                const SizedBox(height: 3),
+                Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, fontWeight: FontWeight.w700, color: valColor)),
+              ],
+            ),
+          ),
         ),
       ),
     );

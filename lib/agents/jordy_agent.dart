@@ -15,9 +15,7 @@ class SupervisionReport {
 }
 
 class JordyAgent extends BaseAgent {
-  final AiThinker? _thinker;
-
-  JordyAgent({AiThinker? thinker}) : _thinker = thinker;
+  JordyAgent();
 
   @override
   String get name => 'Jordy';

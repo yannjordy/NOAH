@@ -112,7 +112,7 @@ Tu es Junior, analyste backtesting. Résultats pour $symbol :
 Trades: ${merged.totalTrades}, WR: ${(merged.winRate * 100).toStringAsFixed(0)}%, PnL: ${merged.totalPnlPct.toStringAsFixed(1)}%, Sharpe: ${merged.sharpeRatio.toStringAsFixed(2)}
 Conseillerais-tu cette stratégie ? 2 phrases max, français.
 ''';
-        _thinker!(p, systemContext: 'Tu es Junior. 2 phrases max, français.')
+        _thinker(p, systemContext: 'Tu es Junior. 2 phrases max, français.')
             .then((r) { if (!r.startsWith('❌')) _aiAdvice[symbol] = r; });
       }
     } finally {

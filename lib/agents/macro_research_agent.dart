@@ -86,7 +86,7 @@ ${results.map((r) => '- [${r.source}] ${r.title}').join('\n')}
 
 Qu'est-ce qui est le plus intéressant ? Donne un conseil en 2 phrases max, français.
 ''';
-        _thinker!(prompt, systemContext: 'Tu es Emmilienne. 2 phrases max, français.')
+        _thinker(prompt, systemContext: 'Tu es Emmilienne. 2 phrases max, français.')
             .then((r) { if (!r.startsWith('❌')) _aiInsights[symbol] = r; });
       }
     } finally {

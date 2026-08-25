@@ -136,7 +136,6 @@ class GlassModal extends StatelessWidget {
     final bg = isDark
         ? Color.fromRGBO(30, 30, 30, 0.92)
         : Color.fromRGBO(255, 255, 255, 0.92);
-    final border = isDark ? NoahGlass.darkBorder : NoahGlass.lightBorder;
 
     return ClipRRect(
       borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),

@@ -19,7 +19,6 @@ class NoahBottomNav extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
-    final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
 
     return ClipRRect(
       child: BackdropFilter(

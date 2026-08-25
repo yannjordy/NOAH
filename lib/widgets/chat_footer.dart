@@ -259,17 +259,7 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(_voiceError, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A))),
                 ),
-              if (widget.chat.tradingEnabled)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(
-                    children: [
-                      Icon(Icons.memory, size: 10, color: const Color(0xFF4CAF8E)),
-                      const SizedBox(width: 4),
-                      Text('Trading IA actif', style: TextStyle(fontSize: 9, color: const Color(0xFF4CAF8E))),
-                    ],
-                  ),
-                ),
+              ),
               const SizedBox(height: 6),
               Row(
                 children: [

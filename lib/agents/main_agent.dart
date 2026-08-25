@@ -93,7 +93,6 @@ class MainAgent extends BaseAgent {
     // Step 2: Build context for OpenCode brain
     final price = ctx.prices[symbol] ?? 0;
     final pct = ctx.pcts[symbol] ?? 0;
-    final closes = (marketReport.details['closes'] as List<double>?) ?? [];
     final rsi = marketReport.details['rsi'] as double?;
     final sma20 = marketReport.details['sma20'] as double?;
     final volRatio = marketReport.details['volRatio'] as double?;
@@ -102,10 +101,6 @@ class MainAgent extends BaseAgent {
     final exposurePct = riskReport.details['exposurePct'] as double? ?? 0;
 
     // Portfolio state
-    final totalValue = ctx.usdtBalance + ctx.positions.fold(0.0, (s, p) {
-      final c = ctx.prices[p.symbol] ?? 0;
-      return s + p.qty * c;
-    });
     final posValue = ctx.positions.fold(0.0, (s, p) {
       final c = ctx.prices[p.symbol] ?? 0;
       return s + p.qty * c;

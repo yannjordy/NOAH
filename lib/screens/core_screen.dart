@@ -239,39 +239,6 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAgentAvatars(Color accent, Color bg1, Color border, bool isDark) {
-    final agents = _agentIcons.keys.take(5).toList();
-    return GestureDetector(
-      onTap: () => _showTeamSheet(context, isDark),
-      child: SizedBox(
-        height: 34,
-        child: Stack(
-          children: [
-            for (int i = 0; i < agents.length; i++)
-              Positioned(
-                left: i * 20.0,
-                child: Container(
-                  width: 30, height: 30,
-                  decoration: BoxDecoration(
-                    color: bg1,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: 0.25), width: 1.5),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 1))],
-                  ),
-                  child: Center(
-                    child: Text(
-                      agents[i].substring(0, 1),
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: accent),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ═══════════════════════════════════════════════════════
   //  PORTFOLIO CARD — Premium
   // ═══════════════════════════════════════════════════════
@@ -285,7 +252,6 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     final pnlPct = deposits > 0 ? ((totalVal - deposits) / deposits * 100) : 0;
     final isUp = pnlVal >= 0;
     final pnlColor = isUp ? green : red;
-    final pnlBg = isUp ? greenBg : redBg;
 
     return SlideTransition(
       position: _slideAnim,
@@ -308,10 +274,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                  Colors.transparent,
+                  isUp ? const Color.fromRGBO(76, 175, 142, 0.15) : const Color.fromRGBO(224, 112, 96, 0.15),
+                  isDark ? const Color.fromRGBO(30, 30, 30, 0.85) : const Color.fromRGBO(255, 255, 255, 0.85),
                 ],
-                stops: const [0.0, 0.3],
               ),
             ),
             child: Column(
@@ -704,15 +669,15 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
                   width: 0.5,
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.3],
-                ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.3],
+              ),
               ),
               child: Column(
             children: [
@@ -924,8 +889,6 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   // ═══════════════════════════════════════════════════════
 
   void _showTeamSheet(BuildContext context, bool isDark) {
-    final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
-    final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
     final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
 
@@ -1001,8 +964,6 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   Widget _teamMemberTile(String name, bool isDark) {
     final isFemale = _agentGenders[name] == 'female';
     final genderColor = isFemale ? (isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57)) : const Color(0xFF4A90D9);
-    final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
-    final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
     final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
     final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);

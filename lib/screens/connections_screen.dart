@@ -176,7 +176,6 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
         listenable: widget.chat,
         builder: (context, _) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          final bg0 = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
           final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
           final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
           final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);

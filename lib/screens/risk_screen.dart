@@ -1,8 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import '../providers/providers.dart';
-import '../theme/noah_theme.dart';
 
 class RiskScreen extends StatelessWidget {
   final RiskProvider risk;
@@ -15,18 +13,12 @@ class RiskScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg0 = isDark ? const Color(0xFF121212) : const Color(0xFFF7F4EE);
     final bg1 = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
-    final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
     final bg3 = isDark ? const Color(0xFF323232) : const Color(0xFFE8E3D8);
-    final bg4 = isDark ? const Color(0xFF3C3C3C) : const Color(0xFFDDD6C8);
     final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
-    final borderMd = isDark ? const Color(0x17FFFFFF) : const Color(0x1A000000);
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
-    final accentBg = accent.withValues(alpha: 0.1);
     final t0 = isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1C1C1C);
-    final t1 = isDark ? const Color(0xFFA0A0A0) : const Color(0xFF5C5C5C);
     final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
     final green = isDark ? const Color(0xFF4CAF8E) : const Color(0xFF2E7D5E);
-    final greenBg = green.withValues(alpha: 0.1);
     final red = isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A);
     final redBg = red.withValues(alpha: 0.1);
 

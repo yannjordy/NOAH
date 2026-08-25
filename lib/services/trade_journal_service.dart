@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
 /// NOAH's learning memory — stores, analyzes, and evolves from trade history

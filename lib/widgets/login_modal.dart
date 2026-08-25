@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import '../providers/providers.dart';
 import '../services/supabase_service.dart';
 
@@ -175,7 +174,6 @@ class _LoginModalState extends State<LoginModal> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg1 = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFFFFFF);
     final bg2 = isDark ? const Color(0xFF282828) : const Color(0xFFF0ECE4);
     final border = isDark ? const Color(0x0DFFFFFF) : const Color(0x0F000000);
     final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);

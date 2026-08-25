@@ -68,7 +68,6 @@ class _BackgroundTaskHandler extends TaskHandler {
 
   // Track prices for alert detection
   final Map<String, double> _lastPrices = {};
-  DateTime _lastAlertCheck = DateTime.now();
 
   static const _trackedSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'DOT'];
 

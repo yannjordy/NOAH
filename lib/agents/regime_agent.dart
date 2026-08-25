@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'agent_base.dart';
-import '../models/models.dart' show Kline;
 
 class RegimeAgent extends BaseAgent {
   @override

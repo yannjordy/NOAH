@@ -1,9 +1,7 @@
 import 'agent_base.dart';
 
 class OnchainAgent extends BaseAgent {
-  final AiThinker? _thinker;
-
-  OnchainAgent({AiThinker? thinker}) : _thinker = thinker;
+  OnchainAgent();
 
   @override
   String get name => 'Chaîne';
