@@ -166,9 +166,11 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _priceTimer = Timer.periodic(const Duration(seconds: 2), (_) => _portfolio.checkStopLosses());
     _binanceTimer = Timer.periodic(const Duration(seconds: 60), (_) => _syncBinance());
     Timer.periodic(const Duration(seconds: 120), (_) => _auth.checkBanStatus());
-    WidgetService.init();
+    try { WidgetService.init(); } catch (_) {}
     _pushWidgetData();
-    Timer.periodic(const Duration(seconds: 30), (_) => _pushWidgetData());
+    try {
+      Timer.periodic(const Duration(seconds: 30), (_) => _pushWidgetData());
+    } catch (_) {}
     Timer.periodic(const Duration(seconds: 60), (_) => _runAgentCycle());
     WidgetsBinding.instance.addObserver(this);
     _authenticateBiometric();

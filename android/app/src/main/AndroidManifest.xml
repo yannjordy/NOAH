@@ -31,21 +31,6 @@
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
-        <!-- Foreground Service for continuous market monitoring -->
-        <service
-            android:name=".NoahForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
-
-        <!-- Boot Receiver to restart service after reboot -->
-        <receiver
-            android:name=".NoahBootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -72,52 +57,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-
-        <!-- Home Screen Widgets -->
-        <receiver
-            android:name=".NoahWidgetProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/noah_widget_market" />
-        </receiver>
-
-        <receiver
-            android:name=".NoahWidgetPortfolio"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/noah_widget_portfolio" />
-        </receiver>
-
-        <receiver
-            android:name=".NoahWidgetHistory"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/noah_widget_history" />
-        </receiver>
-
-        <!-- Widget Update Worker (WorkManager) -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
-        </provider>
     </application>
 
     <!-- Required to query activities that can process text, see:

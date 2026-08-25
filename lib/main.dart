@@ -26,7 +26,9 @@ void main() async {
   ]);
 
   if (Platform.isAndroid) {
-    BackgroundService.start();
+    try {
+      BackgroundService.start();
+    } catch (_) {}
   }
 
   try {
