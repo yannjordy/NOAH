@@ -259,7 +259,6 @@ class _ChatFooterState extends State<ChatFooter> with SingleTickerProviderStateM
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(_voiceError, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A))),
                 ),
-              ),
               const SizedBox(height: 6),
               Row(
                 children: [
