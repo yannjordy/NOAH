@@ -1,4 +1,4 @@
-package com.example.noah_trading_app
+package com.example.ai_trading_assistant
 
 import io.flutter.embedding.android.FlutterActivity
 
