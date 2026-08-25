@@ -118,15 +118,34 @@ class PortfolioScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(36),
                       border: Border.all(color: border),
                       boxShadow: NoahTheme.shadowMd(isDark),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: isPnlUp
-                            ? [const Color.fromRGBO(76, 175, 142, 0.12), const Color.fromRGBO(76, 175, 142, 0.02)]
-                            : [const Color.fromRGBO(224, 112, 96, 0.12), const Color.fromRGBO(224, 112, 96, 0.02)],
-                      ),
                     ),
-                    child: Column(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          top: -18,
+                          right: -18,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                              child: Container(
+                                width: 120,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topRight,
+                                    end: Alignment.bottomLeft,
+                                    colors: isPnlUp
+                                        ? [const Color.fromRGBO(76, 175, 142, 0.25), const Color.fromRGBO(76, 175, 142, 0.0)]
+                                        : [const Color.fromRGBO(224, 112, 96, 0.25), const Color.fromRGBO(224, 112, 96, 0.0)],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -182,6 +201,8 @@ class PortfolioScreen extends StatelessWidget {
                             painter: _SparklinePainter(dataPoints: sparkPts, isUp: isPnlUp, isDark: isDark, color: isPnlUp ? green : red),
                           ),
                         ),
+                      ],
+                    ),
                       ],
                     ),
                   ),
@@ -309,7 +330,33 @@ class PortfolioScreen extends StatelessWidget {
                       border: Border.all(color: border),
                       boxShadow: NoahTheme.shadow(isDark),
                     ),
-                    child: Row(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          top: -16,
+                          right: -16,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                              child: Container(
+                                width: 90,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topRight,
+                                    end: Alignment.bottomLeft,
+                                    colors: isPortUp
+                                        ? [const Color.fromRGBO(76, 175, 142, 0.22), const Color.fromRGBO(76, 175, 142, 0.0)]
+                                        : [const Color.fromRGBO(224, 112, 96, 0.22), const Color.fromRGBO(224, 112, 96, 0.0)],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Row(
                       children: [
                         Container(
                           width: 36, height: 36,
@@ -338,6 +385,8 @@ class PortfolioScreen extends StatelessWidget {
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: t2),
                           ),
                         ),
+                      ],
+                    ),
                       ],
                     ),
                   ),

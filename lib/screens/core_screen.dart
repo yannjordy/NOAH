@@ -237,7 +237,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
         ],
       ),
     );
-  }
+}
 
   // ═══════════════════════════════════════════════════════
   //  PORTFOLIO CARD — Premium
@@ -270,16 +270,34 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                 color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
                 width: 0.5,
               ),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  isUp ? const Color.fromRGBO(76, 175, 142, 0.15) : const Color.fromRGBO(224, 112, 96, 0.15),
-                  isDark ? const Color.fromRGBO(30, 30, 30, 0.85) : const Color.fromRGBO(255, 255, 255, 0.85),
-                ],
-              ),
             ),
-            child: Column(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                      child: Container(
+                        width: 110,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomLeft,
+                            colors: isUp
+                                ? [const Color.fromRGBO(76, 175, 142, 0.28), const Color.fromRGBO(76, 175, 142, 0.0)]
+                                : [const Color.fromRGBO(224, 112, 96, 0.28), const Color.fromRGBO(224, 112, 96, 0.0)],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Column(
           children: [
             Row(
               children: [
@@ -336,6 +354,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
                   _miniStat('Profit / Perte', '${isUp ? '+' : ''}\$${_fmtShort(pnlVal.abs())} (${isUp ? '+' : ''}${pnlPct.toStringAsFixed(1)}%)', t2, pnlColor),
                 ],
               ),
+            ),
+              ],
             ),
               ],
             ),
