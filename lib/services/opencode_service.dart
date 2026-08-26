@@ -9,8 +9,11 @@ class OpenCodeService {
   String model;
   String? _username;
   String? _password;
+  bool _connected = false;
 
   static const int defaultPort = 4096;
+
+  bool get isConnected => _connected;
 
   OpenCodeService({this.baseUrl = 'http://localhost:4096', this.model = 'opencode/mimo-v2.5-free'})
       : _dio = Dio(BaseOptions(
@@ -67,16 +70,17 @@ class OpenCodeService {
   }
 
   Future<bool> healthCheck() async {
-    // Try multiple endpoints to detect OpenCode server
     final endpoints = ['/global/health', '/health', '/config/providers', '/models', '/'];
     for (final endpoint in endpoints) {
       try {
         final resp = await _dio.get('$baseUrl$endpoint', options: Options(headers: _headers));
         if (resp.statusCode == 200 || resp.statusCode == 301 || resp.statusCode == 302) {
+          _connected = true;
           return true;
         }
       } catch (_) {}
     }
+    _connected = false;
     return false;
   }
 

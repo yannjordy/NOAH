@@ -222,56 +222,44 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   }
 
   void _runAgentCycle() {
-    final isOpenCode = _chat.currentModel.startsWith('opencode/');
-    final scanCooldown = isOpenCode ? const Duration(minutes: 5) : const Duration(minutes: 2);
+    if (!_chat.tradingEnabled) return;
+
+    final hasAiBrain = _chat.openCode.isConnected;
     const cooldown = Duration(minutes: 2);
 
-    // Network stability check: skip ALL trading if data is stale or network unstable
-    if (!isNetworkStable) return;
-    if (_chat.currentModel != 'noah-agent' && _chat.tradingEnabled) {
+    // ── BRANCH A: AI scan (only when LLM connected) ──
+    if (hasAiBrain) {
+      final scanCooldown = const Duration(minutes: 3);
       final lastScan = _lastTradeTime['__scan__'];
-      if (lastScan != null && DateTime.now().difference(lastScan) < scanCooldown) {
-        // Skip Branch A, go directly to Branch B
-      } else {
+      if (lastScan == null || DateTime.now().difference(lastScan) >= scanCooldown) {
         final candidates = symbols.where((s) {
           final p = prices[s];
           return p != null && p > 0 && (pcts[s]?.abs() ?? 0) > 0.1;
         }).toList();
 
         if (candidates.isNotEmpty) {
-          final scanPrompt = '''
-Tu es un trader qui scanne le marché. Voici ${candidates.length} symboles avec leurs données :
-
-${candidates.take(15).map((s) {
-  final p = prices[s] ?? 0;
-  final c = pcts[s] ?? 0;
-  return '- $s: \$${p.toStringAsFixed(2)} (${c.toStringAsFixed(2)}%)';
-}).join('\n')}
-
-Choisis les 2 meilleures opportunités de TRADING maintenant. Utilise ton jugement d'expert, pas des règles automatiques.
-Regarde les variations, les niveaux de prix, et sense le marché.
-
-Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
-''';
+          final scanPrompt = 'Scan marche: ${candidates.take(10).map((s) {
+            return '$s:\$${(prices[s] ?? 0).toStringAsFixed(2)} ${(pcts[s] ?? 0).toStringAsFixed(2)}%';
+          }).join(', ')}. Top 2 opportunités. JSON: {"picks":["S1","S2"]}';
 
           _chat.scanMarkets(scanPrompt).then((picks) {
             _lastTradeTime['__scan__'] = DateTime.now();
             if (picks == null || !mounted) return;
-            for (final sym in picks) {
+            for (final sym in picks.take(2)) {
               if (!symbols.contains(sym)) continue;
               final lastTrade = _lastTradeTime[sym];
               if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
               final ctx = _buildAgentContext(sym);
               _chat.getAiTradingDecision(sym, ctx).then((result) {
-                if (result == null || !mounted) return;
-                _executeSignals(sym, result);
+                if (result != null && mounted) _executeSignals(sym, result);
               });
             }
           });
         }
       }
 
-      for (final pos in _portfolio.data.positions) {
+      // Manage existing positions with AI
+      for (final pos in List<Position>.from(_portfolio.data.positions)) {
         final lastTrade = _lastTradeTime[pos.sym];
         if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
         final ctx = _buildAgentContext(pos.sym);
@@ -280,71 +268,37 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
           if (result['action'] == 'SELL') {
             final sellPct = (result['positionSizePct'] as double?) ?? 50;
             final qty = pos.qty * (sellPct / 100);
-            if (qty > 0) {
-              _portfolio.executeTrade('sell', qty, symbol: pos.sym);
-              _lastTradeTime[pos.sym] = DateTime.now();
-            }
+            if (qty > 0) _portfolio.executeTrade('sell', qty, symbol: pos.sym);
+            _lastTradeTime[pos.sym] = DateTime.now();
           }
         });
       }
     }
 
+    // ── BRANCH B: Rule-based agents (ALWAYS runs — with or without LLM) ──
     for (final sym in symbols) {
       final lastTrade = _lastTradeTime[sym];
-      if (lastTrade != null && DateTime.now().difference(lastTrade) < const Duration(minutes: 2)) continue;
+      if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
 
       final ctx = _buildAgentContext(sym);
       final riskReport = RiskAgent().analyze(sym, ctx);
       if (riskReport.details['circuitBreaker'] as bool? ?? false) continue;
-      if ((riskReport.details['riskScore'] as double? ?? 0) > 0.7) continue;
+      if ((riskReport.details['riskScore'] as double? ?? 0) > 0.8) continue;
 
-      // Use AI-powered analysis when OpenCode brain is available
-      if (_mainAgent.hasBrain && _chat.currentModel.startsWith('opencode/')) {
-        _mainAgent.fullAnalysisWithAI(sym, ctx).then((result) {
-          if (!mounted) return;
-          final action = result.consensus['action'] as String? ?? 'HOLD';
-          final confidence = result.consensus['confidence'] as double? ?? 0;
-          if (confidence > 0.35 && _chat.tradingEnabled) {
-            _executeSignals(sym, {
-              'action': action,
-              'confidence': confidence,
-              'positionSizePct': result.consensus['aiPositionSizePct'] as double? ?? 10,
-            });
-          }
+      final consensus = _mainAgent.analyze(sym, ctx);
+      final action = consensus.recommendation ?? 'HOLD';
+      final confidence = consensus.confidence;
+
+      // Execute if confidence is reasonable (> 0.25 for rule-based)
+      if (confidence > 0.25 && action != 'HOLD') {
+        _executeSignals(sym, {
+          'action': action,
+          'confidence': confidence,
+          'positionSizePct': 15.0,
         });
-      } else {
-        final consensus = _mainAgent.analyze(sym, ctx);
-        final action = consensus.recommendation ?? 'HOLD';
-        final confidence = consensus.confidence;
-
-        if (confidence > 0.35 && _chat.tradingEnabled) {
-          if (action == 'BUY') {
-            if (_portfolio.data.positions.any((p) => p.sym == sym && p.qty > 0)) continue;
-            final buyBudget = _tradingBudget();
-            if (buyBudget <= 0) continue;
-            final price = prices[sym] ?? 0;
-            if (price > 0) {
-              final maxTradeValue = buyBudget * 0.15;
-              final qty = maxTradeValue / price;
-              if (qty > 0 && maxTradeValue <= buyBudget) {
-                _portfolio.executeTrade('buy', qty, symbol: sym);
-                _lastTradeTime[sym] = DateTime.now();
-                if (_settings.notifyTrades) NotificationService.onTradeExecuted(sym, 'buy', qty, price);
-              }
-            }
-          } else if (action == 'SELL') {
-            final pos = _portfolio.data.positions.where((p) => p.sym == sym).firstOrNull;
-            if (pos != null && pos.qty > 0) {
-              final qty = pos.qty * 0.5;
-              _portfolio.executeTrade('sell', qty, symbol: sym);
-              _lastTradeTime[sym] = DateTime.now();
-              if (_settings.notifyTrades) NotificationService.onTradeExecuted(sym, 'sell', qty, prices[sym] ?? 0);
-            }
-          }
-        }
       }
-
     }
+
     _checkProfitMilestone();
   }
 
@@ -382,8 +336,10 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
   }
 
   double _tradingBudget() {
+    final usdt = _portfolio.data.usdt;
+    if (usdt <= 0) return 0;
     final threshold = _settings.profitOnlyThreshold;
-    if (threshold <= 0) return _portfolio.data.usdt;
+    if (threshold <= 0) return usdt;
 
     final totalValue = _portfolio.data.totalValue;
     final locked = _portfolio.data.totalDeposits;
@@ -391,21 +347,17 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
     final needed = locked * (threshold / 100);
     final surplus = profit - needed;
     if (surplus <= 0) {
-      // Allow minimum 10% of USDT for trading even without profit
-      // This prevents trading from stopping completely after first trade
-      return (_portfolio.data.usdt * 0.10).clamp(0, _portfolio.data.usdt);
+      // Always allow at least 25% of USDT for trading
+      return (usdt * 0.25).clamp(0, usdt);
     }
-    return surplus.clamp(0, _portfolio.data.usdt);
+    return surplus.clamp(0, usdt);
   }
 
   void _executeSignals(String sym, Map<String, dynamic> result) {
     final action = result['action'] as String;
-    final positionSizePct = result['positionSizePct'] as double;
+    final positionSizePct = (result['positionSizePct'] as double?) ?? 15.0;
 
     if (!_chat.tradingEnabled) return;
-
-    // Network stability: block trades if data is stale
-    if (!isDataFresh(maxAgeSeconds: 15)) return;
 
     if (action == 'BUY') {
       if (_portfolio.data.positions.any((p) => p.sym == sym && p.qty > 0)) return;
@@ -415,7 +367,7 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
       if (price <= 0) return;
       final maxTradeValue = buyBudget * (positionSizePct / 100);
       final qty = maxTradeValue / price;
-      if (qty > 0 && maxTradeValue <= buyBudget) {
+      if (qty > 0) {
         _portfolio.executeTrade('buy', qty, symbol: sym);
         _lastTradeTime[sym] = DateTime.now();
         if (_settings.notifyTrades) NotificationService.onTradeExecuted(sym, 'buy', qty, price);
