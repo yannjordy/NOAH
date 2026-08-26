@@ -204,6 +204,41 @@ class _TradeScreenState extends State<TradeScreen> {
               ],
             ),
           ),
+          // Network instability warning
+          if (!isNetworkStable)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: const Color(0x1AFF5252),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x33FF5252)),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFFF5252),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      'Réseau instable — Prix gelés, reconnexion...',
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: const Color(0xFFFF5252),
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Symbol chips
           SizedBox(
             height: 28,

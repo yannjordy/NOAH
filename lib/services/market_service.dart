@@ -140,10 +140,7 @@ class MarketService extends ChangeNotifier {
       if (_status == MarketStatus.connecting) {
         _status = MarketStatus.simulated;
         notifyListeners();
-        _fallbackTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-          simulatePrices();
-          notifyListeners();
-        });
+        // Do NOT simulate prices — freeze at initial/hardcoded values
       }
     });
   }
@@ -220,10 +217,7 @@ class MarketService extends ChangeNotifier {
     isMarketConnected = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(const Duration(seconds: 5), _initWs);
-    _fallbackTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      simulatePrices();
-      notifyListeners();
-    });
+    // Do NOT simulate prices — freeze at last known real values
     notifyListeners();
   }
 

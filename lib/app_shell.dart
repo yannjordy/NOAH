@@ -226,10 +226,9 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     final scanCooldown = isOpenCode ? const Duration(minutes: 5) : const Duration(minutes: 2);
     const cooldown = Duration(minutes: 2);
 
-    // Network stability check: skip trading if data is stale
-    if (!isDataFresh(maxAgeSeconds: 30)) {
-      // Data too old, skip trading decisions but still run local agents
-    } else if (_chat.currentModel != 'noah-agent' && _chat.tradingEnabled) {
+    // Network stability check: skip ALL trading if data is stale or network unstable
+    if (!isNetworkStable) return;
+    if (_chat.currentModel != 'noah-agent' && _chat.tradingEnabled) {
       final lastScan = _lastTradeTime['__scan__'];
       if (lastScan != null && DateTime.now().difference(lastScan) < scanCooldown) {
         // Skip Branch A, go directly to Branch B
