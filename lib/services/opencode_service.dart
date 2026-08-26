@@ -158,7 +158,7 @@ class OpenCodeService {
   }
 
   Future<String> _ensureSession() async {
-    if (_sessionId != null) return _sessionId!;
+    if (_sessionId != null && _sessionId != 'default') return _sessionId!;
     try {
       final resp = await _dio.post(
         '$baseUrl/session',
@@ -176,8 +176,18 @@ class OpenCodeService {
           _sessionId = data;
           return _sessionId!;
         }
+        // Try nested info object
+        if (data is Map && data['info'] is Map) {
+          final info = data['info'] as Map;
+          if (info['id'] != null) {
+            _sessionId = info['id'] as String;
+            return _sessionId!;
+          }
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      // Session creation failed, will retry on next call
+    }
     _sessionId = 'default';
     return _sessionId!;
   }
@@ -187,11 +197,7 @@ class OpenCodeService {
       final sessionId = await _ensureSession();
 
       final parts = <Map<String, dynamic>>[];
-      if (systemContext != null && systemContext.isNotEmpty) {
-        parts.add({'type': 'text', 'text': '$systemContext\n\n$text'});
-      } else {
-        parts.add({'type': 'text', 'text': text});
-      }
+      parts.add({'type': 'text', 'text': text});
       if (images != null) {
         for (final img in images) {
           parts.add({'type': 'image_url', 'image_url': {'url': img.startsWith('http') ? img : 'data:image/jpeg;base64,$img'}});
@@ -202,16 +208,22 @@ class OpenCodeService {
         'parts': parts,
         'model': model,
       };
+      if (systemContext != null && systemContext.isNotEmpty) {
+        body['system'] = systemContext;
+      }
 
       final resp = await _dio.post(
         '$baseUrl/session/$sessionId/message',
         data: body,
-        options: Options(headers: _headers, receiveTimeout: const Duration(seconds: 180)),
+        options: Options(headers: _headers, receiveTimeout: const Duration(seconds: 300)),
       );
 
       if (resp.statusCode == 200) {
         final data = resp.data;
+
+        // Handle Map response (expected format: { info: Message, parts: Part[] })
         if (data is Map) {
+          // Try to get text from parts array
           final responseParts = data['parts'] as List? ?? [];
           final textParts = responseParts
               .where((p) => p is Map && p['type'] == 'text')
@@ -219,10 +231,13 @@ class OpenCodeService {
               .where((t) => t.isNotEmpty)
               .toList();
           if (textParts.isNotEmpty) return textParts.join('\n');
+
+          // Try info.text field
           final info = data['info'] as Map?;
           if (info != null && info['text'] != null) {
             return info['text'] as String;
           }
+
           // Try content field
           final content = data['content'];
           if (content is String && content.isNotEmpty) return content;
@@ -230,14 +245,29 @@ class OpenCodeService {
             final texts = content.whereType<String>().where((t) => t.isNotEmpty).toList();
             if (texts.isNotEmpty) return texts.join('\n');
           }
+
+          // Try message field
+          final message = data['message'];
+          if (message is String && message.isNotEmpty) return message;
+          if (message is Map && message['text'] != null) {
+            return message['text'] as String;
+          }
         }
+
         // Response might be a string directly
         if (data is String && data.isNotEmpty) return data;
+
         return '⚠️ Réponse vide du serveur OpenCode';
       }
 
       if (resp.statusCode == 401) {
         return '❌ Authentification requise. Configurez le mot de passe OpenCode.';
+      }
+
+      if (resp.statusCode == 404) {
+        // Session might be invalid, reset and retry once
+        _sessionId = null;
+        return '⏳ Session réinitialisée, réessayez...';
       }
 
       return '❌ Erreur OpenCode (${resp.statusCode}): ${resp.statusMessage ?? "inconnue"}';
@@ -247,6 +277,11 @@ class OpenCodeService {
   }
 
   void resetSession() {
+    _sessionId = null;
+  }
+
+  /// Force creation of a new session on next message
+  void newSession() {
     _sessionId = null;
   }
 
