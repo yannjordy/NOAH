@@ -52,7 +52,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
     }
     final secretKey = _secretCtrls[i]?.text.trim() ?? '';
     if (p.name == 'OpenCode Local') {
-      final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:3000';
+      final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:4096';
       widget.chat.updateOpenCodeUrl(url);
       // Auto-test and fetch models when connecting OpenCode
       widget.chat.connectModel(p.name, p.model, apiKey: apiKey, secretKey: secretKey);
@@ -93,7 +93,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
   }
 
   Future<void> _testOpenCode(int i, _ProviderData p) async {
-    final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:3000';
+    final url = _urlCtrls[i]?.text.trim() ?? 'http://localhost:4096';
     setState(() {
       _opencodeTesting[i] = true;
       _opencodeOk.remove(i);
@@ -166,7 +166,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
         'opencode/north-mini-code-free',
         'opencode/qwen3.6-plus-free',
         'opencode/minimax-m2.5-free',
-      ], false, const Color(0xFF00D4AA), 'OC', '', free: true, apiUrl: 'https://opencode.ai', baseUrl: savedOpenCodeUrl.isNotEmpty ? savedOpenCodeUrl : 'http://localhost:3000'),
+      ], false, const Color(0xFF00D4AA), 'OC', '', free: true, apiUrl: 'https://opencode.ai', baseUrl: savedOpenCodeUrl.isNotEmpty ? savedOpenCodeUrl : 'http://localhost:4096'),
       _ProviderData('Binance API', '', [], false, const Color(0xFFF0B90B), 'BN', 'Clé API', hasSecret: true, apiUrl: 'https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'),
       _ProviderData('DeerFlow Agent', 'deerflow-agent', ['deerflow-agent'], false, const Color(0xFF22C55E), 'Df', 'http://localhost:2026', free: true, apiUrl: 'https://github.com/anomalyco/opencode'),
       _ProviderData('NOAH Trading Core', 'trading-core', ['trading-core'], false, const Color(0xFFB08D57), 'NC', 'http://localhost:8001', free: true, apiUrl: null),
@@ -314,7 +314,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                     child: TextField(
                                       controller: _urlCtrls[i],
                                       style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, color: t0),
-                                      decoration: InputDecoration.collapsed(hintText: 'http://localhost:3000', hintStyle: TextStyle(color: t3)),
+                                      decoration: InputDecoration.collapsed(hintText: 'http://localhost:4096', hintStyle: TextStyle(color: t3)),
                                       onChanged: (v) {
                                         if (p.name == 'OpenCode Local') {
                                           widget.chat.updateOpenCodeUrl(v.trim());

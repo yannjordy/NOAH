@@ -131,6 +131,9 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _auth.checkBanStatus();
     _auth.checkAppVersion();
 
+    // Auto-connect to OpenCode (Termux/proot-distro)
+    _chat.autoConnectOpenCode();
+
     // Set OpenCode as the brain for the main trading agent
     _mainAgent.setBrain((prompt, {String? systemContext}) {
       return _chat.openCode.sendMessage(prompt, systemContext: systemContext);
@@ -172,6 +175,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       Timer.periodic(const Duration(seconds: 30), (_) => _pushWidgetData());
     } catch (_) {}
     Timer.periodic(const Duration(seconds: 60), (_) => _runAgentCycle());
+    Timer.periodic(const Duration(seconds: 60), (_) => _chat.checkOpenCodeHealth());
     WidgetsBinding.instance.addObserver(this);
     _authenticateBiometric();
   }
@@ -387,7 +391,11 @@ Réponds UNIQUEMENT JSON : {"picks":["SYMBOLE1","SYMBOLE2"]}
     final profit = totalValue - locked;
     final needed = locked * (threshold / 100);
     final surplus = profit - needed;
-    if (surplus <= 0) return 0;
+    if (surplus <= 0) {
+      // Allow minimum 10% of USDT for trading even without profit
+      // This prevents trading from stopping completely after first trade
+      return (_portfolio.data.usdt * 0.10).clamp(0, _portfolio.data.usdt);
+    }
     return surplus.clamp(0, _portfolio.data.usdt);
   }
 

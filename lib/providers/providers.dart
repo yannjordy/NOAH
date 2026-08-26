@@ -402,7 +402,7 @@ class ChatProvider extends ChangeNotifier {
     'Lepton AI': 'https://api.lepton.ai/v1',
     'Novita AI': 'https://api.novita.ai/v1',
     'Hugging Face': 'https://api-inference.huggingface.co/v1',
-    'OpenCode Local': 'http://localhost:3000',
+    'OpenCode Local': 'http://localhost:4096',
   };
 
   ChatProvider(this._storage, this._auth, {AgentContextBuilder? buildContext})
@@ -508,6 +508,32 @@ class ChatProvider extends ChangeNotifier {
       return ok;
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<void> autoConnectOpenCode() async {
+    final url = await OpenCodeService.autoDetect();
+    if (url != null) {
+      _openCode.baseUrl = url;
+      _storage.setOpenCodeUrl(url);
+      _openCode.model = _currentModel;
+      if (!_connectedModels.containsKey('OpenCode Local')) {
+        _connectedModels['OpenCode Local'] = _currentModel;
+        _storage.saveConnectedModels(_connectedModels);
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<void> checkOpenCodeHealth() async {
+    final ok = await _openCode.healthCheck();
+    if (!ok) {
+      final url = await OpenCodeService.autoDetect();
+      if (url != null && url != _openCode.baseUrl) {
+        _openCode.baseUrl = url;
+        _storage.setOpenCodeUrl(url);
+        notifyListeners();
+      }
     }
   }
 
@@ -747,7 +773,7 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
       final confidence = (decoded['confidence'] as num?)?.toDouble() ?? 0;
       final posSize = (decoded['positionSizePct'] as num?)?.toDouble() ?? 10;
 
-      if (action == null || action == 'HOLD' || confidence < 0.4) return null;
+      if (action == null || action == 'HOLD' || confidence < 0.35) return null;
 
       return {
         'action': action,
@@ -1068,7 +1094,7 @@ Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"posit
 
     // Restore OpenCode connection from storage
     final savedUrl = _storage.getOpenCodeUrl();
-    if (savedUrl.isNotEmpty && savedUrl != 'http://localhost:3000') {
+    if (savedUrl.isNotEmpty && savedUrl != 'http://localhost:4096') {
       _openCode.baseUrl = savedUrl;
     }
     final savedModels = _storage.getConnectedModels();
@@ -1705,13 +1731,18 @@ class PortfolioProvider extends ChangeNotifier {
     final riskMgr = _riskManager;
     if (side == 'buy') {
       if (cost > _data.usdt) return;
-      final kellySize = riskMgr.kellyPositionSize(
-        winRate: _data.winRate.clamp(0.01, 0.99),
-        avgWin: _data.bestTrade.clamp(0.01, double.infinity),
-        avgLoss: _data.worstTrade.abs().clamp(0.01, double.infinity),
-      );
-      final maxAllowed = _data.usdt * kellySize;
-      if (cost > maxAllowed && _data.history.length > 5) return;
+      // Only apply Kelly sizing after we have enough real trade history
+      // (at least 5 completed trades with actual PnL, not just BUY orders)
+      final completedTrades = _data.history.where((t) => t.pnl != null).length;
+      if (completedTrades >= 5) {
+        final kellySize = riskMgr.kellyPositionSize(
+          winRate: _data.winRate.clamp(0.01, 0.99),
+          avgWin: _data.bestTrade.clamp(0.01, double.infinity),
+          avgLoss: _data.worstTrade.abs().clamp(0.01, double.infinity),
+        );
+        final maxAllowed = _data.usdt * kellySize;
+        if (cost > maxAllowed) return;
+      }
     }
     if (side == 'sell') {
       final pos = _data.positions.where((x) => x.sym == sym).firstOrNull;
@@ -1772,11 +1803,15 @@ class PortfolioProvider extends ChangeNotifier {
         _data.history.insert(0, TradeOrder(side: 'sell', sym: pos.sym, qty: pos.qty, price: cur, pnl: pnl, time: 'SL déclenché'));
         _data.positions.remove(pos);
         closed.add(pos.sym);
+        _trackDailyPnl(pnl);
+        if (_onTradeClosed != null) _onTradeClosed!(pos.sym, cur, pnl);
       } else if (pos.takeProfit != null && cur >= pos.takeProfit!) {
         _data.usdt += pos.qty * cur;
         _data.history.insert(0, TradeOrder(side: 'sell', sym: pos.sym, qty: pos.qty, price: cur, pnl: pnl, time: 'TP atteint'));
         _data.positions.remove(pos);
         closed.add(pos.sym);
+        _trackDailyPnl(pnl);
+        if (_onTradeClosed != null) _onTradeClosed!(pos.sym, cur, pnl);
       }
     }
     if (closed.isNotEmpty) {

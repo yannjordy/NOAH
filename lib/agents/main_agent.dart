@@ -169,7 +169,7 @@ Règles:
 - Si circuit breaker = OUI, FORCE action = "HOLD"
 - Si risque > 0.5, sois très conservateur
 - Priorise la protection du capital
-- Un trade n'est justifié que si la confiance > 0.4
+- Un trade n'est justifié que si la confiance > 0.35
 ''';
 
     // Step 4: Ask OpenCode brain

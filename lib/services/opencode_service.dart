@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 
 class OpenCodeService {
@@ -9,7 +10,9 @@ class OpenCodeService {
   String? _username;
   String? _password;
 
-  OpenCodeService({this.baseUrl = 'http://localhost:3000', this.model = 'opencode/mimo-v2.5-free'})
+  static const int defaultPort = 4096;
+
+  OpenCodeService({this.baseUrl = 'http://localhost:4096', this.model = 'opencode/mimo-v2.5-free'})
       : _dio = Dio(BaseOptions(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 120),
@@ -20,6 +23,38 @@ class OpenCodeService {
   void setAuth(String? username, String? password) {
     _username = username;
     _password = password;
+  }
+
+  static Future<String?> autoDetect() async {
+    final candidates = <String>[
+      'http://127.0.0.1:$defaultPort',
+      'http://10.0.2.2:$defaultPort',
+    ];
+
+    try {
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLinkLocal: false,
+      );
+      for (final iface in interfaces) {
+        for (final addr in iface.addresses) {
+          if (!addr.isLoopback) {
+            final url = 'http://${addr.address}:$defaultPort';
+            if (!candidates.contains(url)) candidates.add(url);
+          }
+        }
+      }
+    } catch (_) {}
+
+    for (final url in candidates) {
+      try {
+        final service = OpenCodeService(baseUrl: url);
+        final ok = await service.healthCheck();
+        service.dispose();
+        if (ok) return url;
+      } catch (_) {}
+    }
+    return null;
   }
 
   Map<String, String> get _headers {

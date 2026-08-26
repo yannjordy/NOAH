@@ -221,7 +221,7 @@ class StorageService {
   }
   bool hasAdminPassword() => _store.containsKey(_adminPasswordKey) && _store[_adminPasswordKey]!.isNotEmpty;
 
-  String getOpenCodeUrl() => _store[_opencodeUrlKey] ?? 'http://localhost:3000';
+  String getOpenCodeUrl() => _store[_opencodeUrlKey] ?? 'http://localhost:4096';
   void setOpenCodeUrl(String url) {
     _store[_opencodeUrlKey] = url;
     _persist();
