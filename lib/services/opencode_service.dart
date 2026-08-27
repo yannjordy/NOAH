@@ -15,7 +15,7 @@ class OpenCodeService {
 
   bool get isConnected => _connected;
 
-  OpenCodeService({this.baseUrl = 'http://localhost:4096', this.model = 'opencode/mimo-v2.5-free'})
+  OpenCodeService({this.baseUrl = 'http://localhost:4096', this.model = 'google/gemma-4-31b-it:free'})
       : _dio = Dio(BaseOptions(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 120),
@@ -150,14 +150,14 @@ class OpenCodeService {
 
     // Final fallback: return defaults
     return [
-      'opencode/mimo-v2.5-free',
-      'opencode/big-pickle',
-      'opencode/deepseek-v4-flash-free',
-      'opencode/gpt-5-nano',
-      'opencode/nemotron-3-ultra-free',
-      'opencode/north-mini-code-free',
-      'opencode/qwen3.6-plus-free',
-      'opencode/minimax-m2.5-free',
+      'google/gemma-4-31b-it:free',
+      'nvidia/nemotron-3-ultra-550b-a55b:free',
+      'nvidia/nemotron-nano-9b-v2:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'nvidia/nemotron-3-nano-30b-a3b:free',
+      'poolside/laguna-s-2.1:free',
+      'cohere/north-mini-code:free',
+      'nvidia/nemotron-3.5-lightning:free',
     ];
   }
 
@@ -210,7 +210,11 @@ class OpenCodeService {
 
       final body = <String, dynamic>{
         'parts': parts,
-        'model': model,
+        'model': {
+          'id': model,
+          'providerID': 'openrouter',
+          'modelID': model,
+        },
       };
       if (systemContext != null && systemContext.isNotEmpty) {
         body['system'] = systemContext;
