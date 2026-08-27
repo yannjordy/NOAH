@@ -25,7 +25,7 @@ class _PendingSignalsScreenState extends State<PendingSignalsScreen> {
   Widget build(BuildContext context) {
     final signals = widget.signalService.currentPending;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = NoahTheme.accent(isDark);
+    final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E17) : Colors.white,

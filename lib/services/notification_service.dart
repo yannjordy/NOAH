@@ -1,18 +1,9 @@
 class NotificationService {
-  static final NotificationService _instance = NotificationService._();
-  factory NotificationService() => _instance;
-  NotificationService._();
+  static bool suppressTradeNotifications = false;
 
-  Future<void> showTradeAlert({
-    required String symbol,
-    required String action,
-    required double confidence,
-    required String reason,
-  }) async {
-    // In-app alerts handled by SignalService + PendingSignalsScreen
-  }
-
-  Future<void> showProfitAlert(double profitPct) async {
-    // In-app alerts handled by SignalService
-  }
+  static void init() {}
+  static void onTradingEnabled() {}
+  static void onTradingDisabled() {}
+  static void onTradeExecuted(String symbol, String side, double qty, double balance) {}
+  static void show(String title, String body, {String? tag}) {}
 }

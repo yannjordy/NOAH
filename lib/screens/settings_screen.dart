@@ -977,21 +977,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Manual lock button
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Verrouillage manuel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: t0)),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Text('Verrouiller l\'application maintenant', style: TextStyle(fontSize: 10, color: t2)),
-                    ),
-                  ],
-                ),
-              ),
+          child: GestureDetector(
             onTap: () {
               if (widget.onLock != null) {
                 widget.onLock!();
@@ -1022,8 +1008,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-          ),
-            ],
           ),
         ),
       ],

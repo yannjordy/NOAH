@@ -90,7 +90,7 @@ class _NewsScreenState extends State<NewsScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.news, size: 64, color: Colors.grey[400]),
+                                Icon(Icons.article_outlined, size: 64, color: Colors.grey[400]),
                                 const SizedBox(height: 16),
                                 Text('Aucune news trouvée', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
                               ],

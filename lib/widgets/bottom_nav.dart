@@ -50,29 +50,32 @@ class NoahBottomNav extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          [
-                          Icon(
-                            _items[i].$2,
-                            size: 20,
-                            color: active ? accent : t2,
-                          ),
-                          if (i == 0 && pendingCount > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFE07060),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '$pendingCount',
-                                  style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w700),
-                                ),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                _items[i].$2,
+                                size: 20,
+                                color: active ? accent : t2,
                               ),
-                            ),
-                        ],
+                              if (i == 0 && pendingCount > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE07060),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '$pendingCount',
+                                      style: const TextStyle(fontSize: 7, color: Colors.white, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             _items[i].$1,
