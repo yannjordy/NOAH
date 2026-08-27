@@ -9,6 +9,7 @@ import 'services/storage_service.dart';
 import 'services/market_service.dart';
 import 'services/cache_service.dart';
 import 'services/supabase_service.dart';
+import 'services/crypto_news_service.dart';
 import 'providers/providers.dart';
 import 'models/models.dart';
 import 'agents/agents.dart';
@@ -78,6 +79,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   int _lastProfitMilestone = 0;
   bool _isLocked = false;
   final MainAgent _mainAgent = MainAgent();
+  Map<String, dynamic> _lastSentiment = {};
+  final CryptoNewsService _newsService = CryptoNewsService();
 
   @override
   void initState() {
@@ -182,6 +185,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     } catch (_) {}
     Timer.periodic(const Duration(seconds: 60), (_) => _runAgentCycle());
     Timer.periodic(const Duration(seconds: 60), (_) => _chat.checkOpenCodeHealth());
+    Timer.periodic(const Duration(minutes: 5), (_) => _fetchSentiment());
+    _fetchSentiment(); // Initial fetch
     WidgetsBinding.instance.addObserver(this);
     _authenticateBiometric();
   }
@@ -352,6 +357,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _fetchSentiment() async {
+    try {
+      final sentiment = await _newsService.fetchSentiment(asset: 'BTC');
+      if (sentiment.isNotEmpty) {
+        _lastSentiment = sentiment;
+      }
+    } catch (_) {}
+  }
+
   double _tradingBudget() {
     final usdt = _portfolio.data.usdt;
     if (usdt <= 0) return 0;
@@ -425,6 +439,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       usdtBalance: _portfolio.data.usdt,
       positions: pos,
       history: hist,
+      sentiment: _lastSentiment,
     );
   }
 

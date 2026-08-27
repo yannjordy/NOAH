@@ -9,6 +9,7 @@ class AgentContext {
   final double usdtBalance;
   final List<PositionSnapshot> positions;
   final List<TradeSnapshot> history;
+  final Map<String, dynamic> sentiment;
 
   AgentContext({
     required this.prices,
@@ -19,6 +20,7 @@ class AgentContext {
     required this.usdtBalance,
     required this.positions,
     required this.history,
+    this.sentiment = const {},
   });
 }
 

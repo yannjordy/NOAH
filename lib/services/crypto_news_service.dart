@@ -85,6 +85,16 @@ class CryptoNewsService {
     return [];
   }
 
+  Future<Map<String, dynamic>> fetchSentiment({String asset = 'BTC'}) async {
+    try {
+      final resp = await _dio.get('$_baseUrl/sentiment?asset=$asset');
+      if (resp.statusCode == 200 && resp.data is Map) {
+        return resp.data;
+      }
+    } catch (_) {}
+    return {'sentiment': 'neutral', 'score': 0, 'confidence': 0};
+  }
+
   void startAutoRefresh({Duration interval = const Duration(minutes: 5)}) {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(interval, (_) => fetchNews());

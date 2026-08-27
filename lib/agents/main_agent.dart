@@ -49,7 +49,7 @@ class MainAgent extends BaseAgent {
     final liquidityReport = _liquidity.analyze(symbol, ctx);
     final optimizerReport = _optimizer.analyze(symbol, ctx);
     final attributionReport = _attribution.analyze(symbol, ctx);
-    final consensus = _buildConsensus(marketReport, riskReport, symbol);
+    final consensus = _buildConsensus(marketReport, riskReport, symbol, sentiment: ctx.sentiment);
 
     return AgentReport(
       agentName: name,
@@ -284,7 +284,7 @@ Règles:
     final liquidityReport = _liquidity.analyze(symbol, ctx);
     final optimizerReport = _optimizer.analyze(symbol, ctx);
     final attributionReport = _attribution.analyze(symbol, ctx);
-    final consensus = _buildConsensus(marketReport, riskReport, symbol);
+    final consensus = _buildConsensus(marketReport, riskReport, symbol, sentiment: ctx.sentiment);
     final blocks = _buildBlocks(symbol, ctx, marketReport, riskReport, tradingReport, portfolioReport, macroReport, backtestReport, consensus);
 
     return AnalysisResult(
@@ -306,12 +306,20 @@ Règles:
     );
   }
 
-  Map<String, dynamic> _buildConsensus(AgentReport market, AgentReport risk, String symbol) {
+  Map<String, dynamic> _buildConsensus(AgentReport market, AgentReport risk, String symbol, {Map<String, dynamic> sentiment = const {}}) {
     final marketScore = market.details['score'] as double? ?? 0.5;
     final riskScore = risk.details['riskScore'] as double? ?? 0.0;
     final circuitBreaker = risk.details['circuitBreaker'] as bool? ?? false;
 
-    double finalScore = marketScore;
+    // Apply sentiment adjustment
+    double sentimentBoost = 0.0;
+    final sentScore = sentiment['score'] as double? ?? 0;
+    final sentConfidence = sentiment['confidence'] as double? ?? 0;
+    if (sentConfidence > 0.5) {
+      sentimentBoost = sentScore * 0.1; // Max ±10% adjustment
+    }
+
+    double finalScore = (marketScore + sentimentBoost).clamp(0.0, 1.0);
     String finalAction;
 
     if (circuitBreaker) {
