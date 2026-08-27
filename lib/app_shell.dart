@@ -294,7 +294,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         _executeSignals(sym, {
           'action': action,
           'confidence': confidence,
-          'positionSizePct': 15.0,
+          'positionSizePct': 25.0,
         });
       }
     }
@@ -366,9 +366,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       final price = prices[sym] ?? 0;
       if (price <= 0) return;
       final maxTradeValue = buyBudget * (positionSizePct / 100);
+      if (maxTradeValue < 1.0) return; // Minimum $1 per trade
       final qty = maxTradeValue / price;
+      final sl = price * 0.95; // Stop loss at 5%
+      final tp = price * 1.04; // Take profit at 4%
       if (qty > 0) {
-        _portfolio.executeTrade('buy', qty, symbol: sym);
+        _portfolio.executeTrade('buy', qty, symbol: sym, stopLoss: sl, takeProfit: tp);
         _lastTradeTime[sym] = DateTime.now();
         if (_settings.notifyTrades) NotificationService.onTradeExecuted(sym, 'buy', qty, price);
       }

@@ -784,8 +784,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     final isUp = pnlVal >= 0;
     final sellTrades = p?.history.where((t) => t.side == 'sell') ?? <TradeOrder>[];
     final winTrades = sellTrades.where((t) => (t.pnl ?? 0) > 0).length;
-    final totalTrades = p?.history.length ?? 0;
-    final winRate = totalTrades > 0 ? (winTrades / totalTrades * 100) : 0.0;
+    final totalClosed = sellTrades.length;
+    final winRate = totalClosed > 0 ? (winTrades / totalClosed * 100) : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,6 +805,14 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             Expanded(child: _metricCard('Capital investi', '\$${_fmtShort(deposits)}', t0, const Color(0x00000000), t2, t0, bg1, border, isDark)),
             const SizedBox(width: 8),
             Expanded(child: _metricCard('Trades exécutés', '$totalTrades', t0, const Color(0x00000000), t2, t0, bg1, border, isDark)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _metricCard('Frais totaux', '\$${_fmtShort(p?.totalFees ?? 0)}', red, const Color(0x00000000), t2, t0, bg1, border, isDark)),
+            const SizedBox(width: 8),
+            Expanded(child: _metricCard('Trades gagnants', '$winTrades', green, const Color(0x00000000), t2, t0, bg1, border, isDark)),
           ],
         ),
       ],
@@ -1253,7 +1261,9 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     final pnlVal = totalVal - deposits;
     final isUp = pnlVal >= 0;
     final buys = p?.history.where((t) => t.side == 'buy').length ?? 0;
-    final sells = p?.history.where((t) => t.side == 'sell').length ?? 0;
+    final sellTrades = p?.history.where((t) => t.side == 'sell') ?? <TradeOrder>[];
+    final winSells = sellTrades.where((t) => (t.pnl ?? 0) > 0).length;
+    final loseSells = sellTrades.where((t) => (t.pnl ?? 0) < 0).length;
     final totalT = p?.history.length ?? 0;
 
     return ClipRRect(
@@ -1287,7 +1297,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
           const SizedBox(height: 14),
           _perfRow('Gain / Perte', '${isUp ? '+' : ''}\$${_fmtShort(pnlVal.abs())}', 'ROI', '${isUp ? '+' : ''}${((pnlVal / deposits) * 100).toStringAsFixed(1)}%', isUp ? green : red, t1, isUp ? green : red, t1),
           const SizedBox(height: 14),
-          _perfRow('Trades gagnants', '$sells', 'Trades perdants', '$buys', green, t1, red, t1),
+          _perfRow('Trades gagnants', '$winSells', 'Trades perdants', '$loseSells', green, t1, red, t1),
           const SizedBox(height: 14),
           _perfRow('Total trades', '$totalT', 'Positions ouvertes', '${p?.positions.length ?? 0}', t0, t1, t0, t1),
             ],
@@ -1364,7 +1374,8 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
   String _fmtShort(double v) {
     if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(2)}M';
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
+    if (v >= 10) return v.toStringAsFixed(1);
+    return v.toStringAsFixed(2);
   }
 }
 

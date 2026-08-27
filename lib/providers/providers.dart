@@ -1749,8 +1749,9 @@ class PortfolioProvider extends ChangeNotifier {
       if (pos == null || qty > pos.qty) return;
     }
     double? sellPnl;
+    final fee = cost * 0.001; // 0.1% Binance fee
     if (side == 'buy') {
-      _data.usdt -= cost;
+      _data.usdt -= (cost + fee);
       final pos = _data.positions.where((x) => x.sym == sym).firstOrNull;
       if (pos != null) {
         final newQty = pos.qty + qty;
@@ -1764,8 +1765,8 @@ class PortfolioProvider extends ChangeNotifier {
     } else {
       final pos = _data.positions.where((x) => x.sym == sym).firstOrNull;
       if (pos == null) return;
-      _data.usdt += cost;
-      sellPnl = (p - pos.entry) * qty;
+      _data.usdt += (cost - fee);
+      sellPnl = (p - pos.entry) * qty - fee;
       _trackDailyPnl(sellPnl);
       pos.qty -= qty;
       final wasClosed = pos.qty < 0.00001;
@@ -1776,6 +1777,7 @@ class PortfolioProvider extends ChangeNotifier {
       }
     }
     _data.history.insert(0, TradeOrder(side: side, sym: sym, qty: qty, price: p, pnl: sellPnl));
+    _data.totalFees += fee;
     updatePeakCapital();
     _rebuildRisk();
     _syncToSupabase();
@@ -1797,17 +1799,21 @@ class PortfolioProvider extends ChangeNotifier {
     final closed = <String>[];
     for (final pos in List<Position>.from(_data.positions)) {
       final cur = prices[pos.sym] ?? 0;
-      final pnl = (cur - pos.entry) * pos.qty;
+      final cost = pos.qty * cur;
+      final fee = cost * 0.001; // 0.1% fee
+      final pnl = (cur - pos.entry) * pos.qty - fee;
       if (pos.stopLoss != null && cur <= pos.stopLoss!) {
-        _data.usdt += pos.qty * cur;
+        _data.usdt += (cost - fee);
         _data.history.insert(0, TradeOrder(side: 'sell', sym: pos.sym, qty: pos.qty, price: cur, pnl: pnl, time: 'SL déclenché'));
+        _data.totalFees += fee;
         _data.positions.remove(pos);
         closed.add(pos.sym);
         _trackDailyPnl(pnl);
         if (_onTradeClosed != null) _onTradeClosed!(pos.sym, cur, pnl);
       } else if (pos.takeProfit != null && cur >= pos.takeProfit!) {
-        _data.usdt += pos.qty * cur;
+        _data.usdt += (cost - fee);
         _data.history.insert(0, TradeOrder(side: 'sell', sym: pos.sym, qty: pos.qty, price: cur, pnl: pnl, time: 'TP atteint'));
+        _data.totalFees += fee;
         _data.positions.remove(pos);
         closed.add(pos.sym);
         _trackDailyPnl(pnl);
