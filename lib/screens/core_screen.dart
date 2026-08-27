@@ -784,6 +784,7 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
     final isUp = pnlVal >= 0;
     final sellTrades = p?.history.where((t) => t.side == 'sell') ?? <TradeOrder>[];
     final winTrades = sellTrades.where((t) => (t.pnl ?? 0) > 0).length;
+    final totalTrades = p?.history.length ?? 0;
     final totalClosed = sellTrades.length;
     final winRate = totalClosed > 0 ? (winTrades / totalClosed * 100) : 0.0;
 
