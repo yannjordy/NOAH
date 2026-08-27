@@ -212,7 +212,7 @@ class _PendingSignalsScreenState extends State<PendingSignalsScreen> {
                             child: GestureDetector(
                               onTap: () {
                                 widget.signalService.approveSignal(signal);
-                                NotificationService().showTradeAlert(
+                                NotificationService.showTradeAlert(
                                   symbol: signal.symbol,
                                   action: signal.action,
                                   confidence: signal.confidence,
