@@ -946,22 +946,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _manualLockRow(Color accent, Color bg2, Color borderMd, Color t0, Color t2) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        // Biometric lock toggle
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Verrouillage manuel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: t0)),
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: Text('Verrouiller l\'application maintenant', style: TextStyle(fontSize: 10, color: t2)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Verrouillage biométrique', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: t0)),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text('Demander l\'empreinte au démarrage', style: TextStyle(fontSize: 10, color: t2)),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: widget.settings.biometricLock,
+                onChanged: (v) => widget.settings.setBiometricLock(v),
+                activeColor: accent,
               ),
             ],
           ),
-          GestureDetector(
+        ),
+        // Manual lock button
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Verrouillage manuel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: t0)),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text('Verrouiller l\'application maintenant', style: TextStyle(fontSize: 10, color: t2)),
+                    ),
+                  ],
+                ),
+              ),
             onTap: () {
               if (widget.onLock != null) {
                 widget.onLock!();
@@ -993,8 +1023,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-        ],
-      ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

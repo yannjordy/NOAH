@@ -272,6 +272,9 @@ class StorageService {
   bool getNotifySound() => _store['noah_notify_sound'] != 'false';
   void setNotifySound(bool v) { _store['noah_notify_sound'] = v.toString(); _persist(); }
 
+  bool getBiometricLock() => _store['noah_biometric_lock'] == 'true';
+  void setBiometricLock(bool v) { _store['noah_biometric_lock'] = v.toString(); _persist(); }
+
   // ── Price Cache ──────────────────────────────────────────
   static const _pricesKey = 'noah_cached_prices';
   static const _pctsKey = 'noah_cached_pcts';

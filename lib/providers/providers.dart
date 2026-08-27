@@ -259,6 +259,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _notifyRisk = true;
   bool _notifyVibrate = true;
   bool _notifySound = true;
+  bool _biometricLock = false;
   String _defaultModel = 'DeepSeek';
   String _responseMode = 'Précis (recommandé)';
   String _fontFamily = 'Inter';
@@ -290,6 +291,7 @@ class SettingsProvider extends ChangeNotifier {
     _notifyRisk = _storage.getNotifyRisk();
     _notifyVibrate = _storage.getNotifyVibrate();
     _notifySound = _storage.getNotifySound();
+    _biometricLock = _storage.getBiometricLock();
   }
 
   static const _validFonts = ['Inter', 'PlayfairDisplay', 'JetBrainsMono'];
@@ -302,6 +304,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get notifyRisk => _notifyRisk;
   bool get notifyVibrate => _notifyVibrate;
   bool get notifySound => _notifySound;
+  bool get biometricLock => _biometricLock;
   String get defaultModel => _defaultModel;
   String get responseMode => _responseMode;
   String get fontFamily => _fontFamily;
@@ -337,6 +340,7 @@ class SettingsProvider extends ChangeNotifier {
   void setNotifyRisk(bool v) { _notifyRisk = v; _storage.setNotifyRisk(v); notifyListeners(); }
   void setNotifyVibrate(bool v) { _notifyVibrate = v; _storage.setNotifyVibrate(v); notifyListeners(); }
   void setNotifySound(bool v) { _notifySound = v; _storage.setNotifySound(v); notifyListeners(); }
+  void setBiometricLock(bool v) { _biometricLock = v; _storage.setBiometricLock(v); notifyListeners(); }
   void setProfitThreshold(double v) { _profitOnlyThreshold = v; _storage.setProfitThreshold(v); notifyListeners(); }
   void setDefaultModel(String v) { _defaultModel = v; _storage.setDefaultModel(v); notifyListeners(); }
   void setResponseMode(String v) { _responseMode = v; _storage.setResponseMode(v); notifyListeners(); }
