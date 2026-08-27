@@ -271,6 +271,45 @@ class StorageService {
 
   bool getNotifySound() => _store['noah_notify_sound'] != 'false';
   void setNotifySound(bool v) { _store['noah_notify_sound'] = v.toString(); _persist(); }
+
+  // ── Price Cache ──────────────────────────────────────────
+  static const _pricesKey = 'noah_cached_prices';
+  static const _pctsKey = 'noah_cached_pcts';
+  static const _pricesTimestampKey = 'noah_prices_timestamp';
+
+  void cachePrices() {
+    try {
+      _store[_pricesKey] = jsonEncode(prices.map((k, v) => MapEntry(k, v)));
+      _store[_pctsKey] = jsonEncode(pcts.map((k, v) => MapEntry(k, v)));
+      _store[_pricesTimestampKey] = DateTime.now().toIso8601String();
+      _persist();
+    } catch (_) {}
+  }
+
+  void loadCachedPrices() {
+    try {
+      final pricesData = _store[_pricesKey];
+      if (pricesData != null) {
+        final map = jsonDecode(pricesData) as Map<String, dynamic>;
+        for (final e in map.entries) {
+          prices[e.key] = (e.value as num).toDouble();
+        }
+      }
+      final pctsData = _store[_pctsKey];
+      if (pctsData != null) {
+        final map = jsonDecode(pctsData) as Map<String, dynamic>;
+        for (final e in map.entries) {
+          pcts[e.key] = (e.value as num).toDouble();
+        }
+      }
+    } catch (_) {}
+  }
+
+  DateTime? get pricesTimestamp {
+    final ts = _store[_pricesTimestampKey];
+    if (ts == null) return null;
+    try { return DateTime.parse(ts); } catch (_) { return null; }
+  }
 }
 
 const _fontKey = 'noah_font';

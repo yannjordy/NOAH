@@ -126,6 +126,10 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _risk.attachPortfolio(_portfolio);
     _portfolio.listenToMarket(_market);
     _chat.attachProviders(_portfolio, _risk, _market);
+
+    // Load cached prices before connecting (shows last known prices immediately)
+    widget.storage.loadCachedPrices();
+
     _market.connect();
     _chat.initChat();
     _auth.checkBanStatus();
@@ -168,6 +172,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _overlayAnim.addListener(() => setState(() {}));
     _priceTimer = Timer.periodic(const Duration(seconds: 2), (_) => _portfolio.checkStopLosses());
     _binanceTimer = Timer.periodic(const Duration(seconds: 60), (_) => _syncBinance());
+    Timer.periodic(const Duration(seconds: 30), (_) => widget.storage.cachePrices());
     Timer.periodic(const Duration(seconds: 120), (_) => _auth.checkBanStatus());
     try { WidgetService.init(); } catch (_) {}
     _pushWidgetData();
@@ -188,6 +193,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         _authenticateBiometric();
       }
     } else if (state == AppLifecycleState.paused) {
+      // Save prices before going to background
+      widget.storage.cachePrices();
       // Don't auto-lock - just start background service
       BackgroundService.start();
       _runAgentCycle();
