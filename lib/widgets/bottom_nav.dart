@@ -11,6 +11,7 @@ class NoahBottomNav extends StatelessWidget {
     ('CORE', Icons.dashboard_outlined),
     ('CHAT', Icons.chat_bubble_outline),
     ('TRADE', Icons.bar_chart_outlined),
+    ('NEWS', Icons.newspaper_outlined),
     ('PORTFOLIO', Icons.account_balance_wallet_outlined),
   ];
 

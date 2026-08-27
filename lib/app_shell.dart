@@ -24,6 +24,7 @@ import 'screens/connections_screen.dart';
 import 'screens/portfolio_screen.dart';
 import 'screens/risk_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/news_screen.dart';
 import 'screens/about_screen.dart';
 import 'widgets/notification_bar.dart';
 import 'widgets/notification_overlay.dart';
@@ -593,9 +594,9 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
                           ),
                           Expanded(child: RepaintBoundary(child: _buildScreen())),
                           NoahBottomNav(
-                            currentIndex: _currentTab <= 2 ? _currentTab : _currentTab == 4 ? 3 : (_prevNavIndex),
+                            currentIndex: _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : (_prevNavIndex),
                             onTap: (i) {
-                              const mapping = [0, 1, 2, 4];
+                              const mapping = [0, 1, 2, 7, 4];
                               _prevNavIndex = i;
                               _goTab(mapping[i]);
                             },
@@ -831,6 +832,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       case 6:
         return SettingsScreen(settings: _settings, auth: _auth, chat: _chat, market: _market, cache: widget.cache, storage: widget.storage, openLogin: _openLogin, onLock: _manualLock);
       case 7:
+        return const NewsScreen();
+      case 8:
         return const AboutScreen();
       default:
         return CoreScreen(chat: _chat, goTab: _goTab);
