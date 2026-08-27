@@ -266,6 +266,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         _chat.getAiTradingDecision(pos.sym, ctx).then((result) {
           if (result == null || !mounted) return;
           if (result['action'] == 'SELL') {
+            // AI can only sell if position is at a LOSS (to cut losses)
+            // or if price is above TP (to take profit)
+            final currentPrice = prices[pos.sym] ?? 0;
+            final pnlPct = pos.entry > 0 ? (currentPrice - pos.entry) / pos.entry : 0;
+            final tp = pos.takeProfit;
+            final isAboveTP = tp != null && currentPrice >= tp;
+            final isAtLoss = pnlPct < 0;
+            // Don't let AI sell small wins - let TP handle it
+            if (!isAtLoss && !isAboveTP) return;
             final sellPct = (result['positionSizePct'] as double?) ?? 50;
             final qty = pos.qty * (sellPct / 100);
             if (qty > 0) _portfolio.executeTrade('sell', qty, symbol: pos.sym);
@@ -368,8 +377,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       final maxTradeValue = buyBudget * (positionSizePct / 100);
       if (maxTradeValue < 1.0) return; // Minimum $1 per trade
       final qty = maxTradeValue / price;
-      final sl = price * 0.95; // Stop loss at 5%
-      final tp = price * 1.04; // Take profit at 4%
+      final sl = price * 0.97; // Stop loss at 3%
+      final tp = price * 1.06; // Take profit at 6%
       if (qty > 0) {
         _portfolio.executeTrade('buy', qty, symbol: sym, stopLoss: sl, takeProfit: tp);
         _lastTradeTime[sym] = DateTime.now();
@@ -378,6 +387,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     } else if (action == 'SELL') {
       final pos = _portfolio.data.positions.where((p) => p.sym == sym).firstOrNull;
       if (pos == null || pos.qty <= 0) return;
+      // Rule-based: only sell if at a loss (cut loss) or above TP (take profit)
+      final currentPrice = prices[sym] ?? 0;
+      final pnlPct = pos.entry > 0 ? (currentPrice - pos.entry) / pos.entry : 0;
+      final isAboveTP = pos.takeProfit != null && currentPrice >= pos.takeProfit!;
+      final isAtLoss = pnlPct < 0;
+      if (!isAtLoss && !isAboveTP) return; // Hold for TP
       final qty = pos.qty * (positionSizePct / 100);
       _portfolio.executeTrade('sell', qty, symbol: sym);
       _lastTradeTime[sym] = DateTime.now();
