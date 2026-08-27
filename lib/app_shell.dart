@@ -11,6 +11,7 @@ import 'services/cache_service.dart';
 import 'services/supabase_service.dart';
 import 'services/crypto_news_service.dart';
 import 'services/technical_analysis.dart';
+import 'services/signal_service.dart';
 import 'providers/providers.dart';
 import 'models/models.dart';
 import 'agents/agents.dart';
@@ -25,6 +26,7 @@ import 'screens/trade_screen.dart';
 import 'screens/connections_screen.dart';
 import 'screens/portfolio_screen.dart';
 import 'screens/risk_screen.dart';
+import 'screens/pending_signals_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/about_screen.dart';
@@ -84,6 +86,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   final CryptoNewsService _newsService = CryptoNewsService();
   final _decisionCache = <String, Map<String, dynamic>>{};
   final _priceSnapshots = <String, double>{};
+  final _signalService = SignalService();
 
   @override
   void initState() {
@@ -351,9 +354,18 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       };
       _decisionCache[sym] = signal;
 
-      // Execute if confidence is reasonable (> 0.25 for rule-based)
-      if (confidence > 0.25 && action != 'HOLD') {
-        _executeSignals(sym, signal);
+      // Send to signal service for user confirmation
+      if (confidence > 0.3 && action != 'HOLD') {
+        final tech = ctx.technicals[sym] ?? {};
+        _signalService.addSignal(
+          symbol: sym,
+          action: action,
+          confidence: confidence,
+          positionSizePct: 25.0,
+          reason: consensus.summary,
+          technicals: tech,
+          agentReport: {'score': consensus.confidence, 'summary': consensus.summary},
+        );
       }
     }
 
@@ -586,6 +598,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _chat.dispose();
     _portfolio.dispose();
     _risk.dispose();
+    _signalService.dispose();
     super.dispose();
   }
 
@@ -655,6 +668,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
                           Expanded(child: RepaintBoundary(child: _buildScreen())),
                           NoahBottomNav(
                             currentIndex: _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : (_prevNavIndex),
+                            pendingCount: _signalService.currentPending.length,
                             onTap: (i) {
                               const mapping = [0, 1, 2, 7, 4];
                               _prevNavIndex = i;
@@ -895,6 +909,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         return const NewsScreen();
       case 8:
         return const AboutScreen();
+      case 9:
+        return PendingSignalsScreen(signalService: _signalService);
       default:
         return CoreScreen(chat: _chat, goTab: _goTab);
     }

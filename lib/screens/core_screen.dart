@@ -545,6 +545,17 @@ class _CoreScreenState extends State<CoreScreen> with TickerProviderStateMixin {
             )),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _actionCard(
+              icon: Icons.notifications_active_rounded, label: 'Signaux',
+              desc: 'Opportunités en attente', color: const Color(0xFFE07060), bg: const Color(0x1AE07060),
+              border: const Color(0xFFE07060).withValues(alpha: 0.25),
+              isDark: isDark, onTap: () => widget.goTab(9),
+            )),
+          ],
+        ),
       ],
     );
   }

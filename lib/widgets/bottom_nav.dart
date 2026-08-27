@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 class NoahBottomNav extends StatelessWidget {
   final int currentIndex;
   final void Function(int) onTap;
+  final int pendingCount;
 
-  const NoahBottomNav({super.key, required this.currentIndex, required this.onTap});
+  const NoahBottomNav({super.key, required this.currentIndex, required this.onTap, this.pendingCount = 0});
 
   static const _items = [
     ('CORE', Icons.dashboard_outlined),
@@ -49,11 +50,29 @@ class NoahBottomNav extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          [
                           Icon(
                             _items[i].$2,
                             size: 20,
                             color: active ? accent : t2,
                           ),
+                          if (i == 0 && pendingCount > 0)
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFE07060),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '$pendingCount',
+                                  style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ),
+                        ],
                           const SizedBox(height: 2),
                           Text(
                             _items[i].$1,
