@@ -721,42 +721,40 @@ class ChatProvider extends ChangeNotifier {
     final usdtBalance = ctx.usdtBalance;
     final positionsCount = ctx.positions.length;
 
+    final tech = ctx.technicals[symbol];
+    final rsi = tech?['rsi'] as double? ?? 50;
+    final macd = tech?['macd'] as List<double>? ?? [0, 0, 0];
+    final bollinger = tech?['bollinger'] as List<double>? ?? [0, 0, 0];
+    final atr = tech?['atr'] as double? ?? 0;
+    final volumeRatio = tech?['volumeRatio'] as double? ?? 1.0;
+    final rsiSignal = tech?['rsiSignal'] as String? ?? 'NEUTRAL';
+    final macdSignal = tech?['macdSignal'] as String? ?? 'NEUTRAL';
+    final bollingerSignal = tech?['bollingerSignal'] as String? ?? 'NEUTRAL';
+
     final prompt = '''
-Tu es un trader professionnel avec des années d'expérience. Analyse $symbol (prix: \$${price.toStringAsFixed(2)}, variation 24h: ${pct.toStringAsFixed(2)}%).
+ANALYSE TRADING RAPIDE — $symbol
+Prix: \$${price.toStringAsFixed(2)} | 24h: ${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(2)}%
 
-Données techniques du moment :
-- Farida (Marché): ${marketReport.recommendation} (confiance: ${(marketReport.confidence * 100).toStringAsFixed(0)}%, score: ${(marketReport.details['score'] as double? ?? 0).toStringAsFixed(2)})
-- RSI: ${(marketReport.details['rsi'] as double? ?? 0).toStringAsFixed(0)}
-- SMA20: \$${(marketReport.details['sma20'] as double? ?? 0).toStringAsFixed(0)}
-- Volatilité: ${((marketReport.details['volatility'] as double? ?? 0) * 100).toStringAsFixed(1)}%
-- Volume relatif: ${(marketReport.details['volRatio'] as double? ?? 0).toStringAsFixed(2)}x
+INDICATEURS:
+RSI(14): ${rsi.toStringAsFixed(1)} [$rsiSignal] | MACD: ${macd[0].toStringAsFixed(4)} / Signal: ${macd[1].toStringAsFixed(4)} [$macdSignal]
+Bollinger: \$${bollinger[0].toStringAsFixed(2)} — \$${bollinger[1].toStringAsFixed(2)} — \$${bollinger[2].toStringAsFixed(2)} [$bollingerSignal]
+ATR: \$${atr.toStringAsFixed(2)} | Volume: ${volumeRatio.toStringAsFixed(2)}x moyenne
 
-Risque (Henri): score ${(riskScore * 100).toStringAsFixed(0)}%, niveau ${riskReport.details['riskLevel'] as String? ?? 'LOW'}
+AGENTES:
+Marché (Farida): ${marketReport.recommendation} (${(marketReport.confidence * 100).toStringAsFixed(0)}%)
+Risque (Henri): ${(riskScore * 100).toStringAsFixed(0)}% — ${riskReport.details['riskLevel'] ?? 'LOW'}
+Macro (Emmilienne): Fear ${macroReport.details['fearGreed'] ?? '?'}/100
+Backtest (Junior): WR ${backtestReport.details['trainWinRate'] != null ? ((backtestReport.details['trainWinRate'] as double) * 100).toStringAsFixed(0) : '?'}% | Sharpe ${backtestReport.details['trainSharpe'] ?? '?'}
 
-Portefeuille: USDT dispo = \$${usdtBalance.toStringAsFixed(0)}, ${positionsCount} position(s) ouverte(s)
+PORT: USDT \$${usdtBalance.toStringAsFixed(0)} | ${positionsCount} pos
+MEMOIRE: ${_storage.getAgentMemory()}
 
-Macro & Web (Emmilienne): Fear & Greed ${macroReport.details['fearGreed'] ?? 'N/A'}/100, ${macroReport.details['webResults'] ?? 0} résultats web — ${macroReport.summary.length > 120 ? macroReport.summary.substring(0, 120) : macroReport.summary}
+DECISION:
+1. Config technique confirmée? RSI+MACD+Bollinger d'accord?
+2. Trend ou reversal? Pas de trade dans le bruit.
+3. Position sizing adapté au risque.
 
-Backtest (Junior): ${backtestReport.details['trainTrades'] ?? 0} trades train, Sharpe ${backtestReport.details['trainSharpe'] ?? 'N/A'}, WR ${backtestReport.details['trainWinRate'] != null ? ((backtestReport.details['trainWinRate'] as double) * 100).toStringAsFixed(0) : 'N/A'}%
-
-Supervision (Jordy): ${jordyReport.details['healthScore'] ?? 'N/A'}% santé, ${(jordyReport.details['flags'] as List?)?.length ?? 0} alertes
-Régime (Marché): ${regimeReport.details['regime'] ?? 'N/A'}
-Onchain (Chaîne): activité ${onchainReport.details['whaleActivity'] ?? 'N/A'}, flux ${onchainReport.details['exchangeFlow'] ?? 'N/A'}
-Liquidité (Liquidité): spread ${liquidityReport.details['spread'] ?? 'N/A'}%, slippage estimé ${liquidityReport.details['slippage'] ?? 'N/A'}%
-Attribution: ${attributionReport.details['totalTrades'] ?? 0} trades historiques, meilleur ${attributionReport.details['bestSymbol'] ?? 'N/A'}
-
-Ta mémoire de trading (utilise ces techniques comme un trader expert, pas comme des règles automatiques) :
-${_storage.getAgentMemory()}
-
-Maintenant réfléchis comme un trader :
-1. Regarde les données. Est-ce que tu vois une VRAIE opportunité ou c'est du bruit ?
-2. Applique les techniques de ta mémoire avec ton jugement. Un indicateur ne fait pas un trade.
-3. Si c'est une opportunité solide → dis BUY ou SELL. Sinon → HOLD sans forcer.
-4. Taille de la position : utilise ton expérience. 5-10% si t'as un doute, 15-20% si t'es confiant, 20-30% si t'es très sûr.
-5. N'entre PAS par ennui ou parce que les données sont neutres. Attends la bonne config.
-6. Les techniques sont des GUIDES, pas des règles absolues. Parfois le marché va à l'encontre des indicateurs.
-
-Réponds UNIQUEMENT JSON : {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"reason":"phrase"}
+JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"reason":"phrase"}
 ''';
 
     try {

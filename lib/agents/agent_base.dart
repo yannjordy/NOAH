@@ -10,6 +10,7 @@ class AgentContext {
   final List<PositionSnapshot> positions;
   final List<TradeSnapshot> history;
   final Map<String, dynamic> sentiment;
+  final Map<String, Map<String, dynamic>> technicals;
 
   AgentContext({
     required this.prices,
@@ -21,6 +22,7 @@ class AgentContext {
     required this.positions,
     required this.history,
     this.sentiment = const {},
+    this.technicals = const {},
   });
 }
 

@@ -10,6 +10,7 @@ import 'services/market_service.dart';
 import 'services/cache_service.dart';
 import 'services/supabase_service.dart';
 import 'services/crypto_news_service.dart';
+import 'services/technical_analysis.dart';
 import 'providers/providers.dart';
 import 'models/models.dart';
 import 'agents/agents.dart';
@@ -81,6 +82,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   final MainAgent _mainAgent = MainAgent();
   Map<String, dynamic> _lastSentiment = {};
   final CryptoNewsService _newsService = CryptoNewsService();
+  final _decisionCache = <String, Map<String, dynamic>>{};
+  final _priceSnapshots = <String, double>{};
 
   @override
   void initState() {
@@ -244,11 +247,11 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     if (!_chat.tradingEnabled) return;
 
     final hasAiBrain = _chat.openCode.isConnected;
-    const cooldown = Duration(minutes: 2);
+    const cooldown = Duration(seconds: 30);
 
     // ── BRANCH A: AI scan (only when LLM connected) ──
     if (hasAiBrain) {
-      final scanCooldown = const Duration(minutes: 3);
+      final scanCooldown = const Duration(minutes: 1);
       final lastScan = _lastTradeTime['__scan__'];
       if (lastScan == null || DateTime.now().difference(lastScan) >= scanCooldown) {
         final candidates = symbols.where((s) {
@@ -304,9 +307,33 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     }
 
     // ── BRANCH B: Rule-based agents (ALWAYS runs — with or without LLM) ──
-    for (final sym in symbols) {
+    // Smart prioritization: sort by volatility (most moved first)
+    final sortedSymbols = List<String>.from(symbols);
+    sortedSymbols.sort((a, b) => (pcts[a]?.abs() ?? 0).compareTo(pcts[b]?.abs() ?? 0));
+    sortedSymbols.reversed;
+
+    for (final sym in sortedSymbols) {
       final lastTrade = _lastTradeTime[sym];
       if (lastTrade != null && DateTime.now().difference(lastTrade) < cooldown) continue;
+
+      // Decision cache: skip if price hasn't changed >0.5%
+      final currentPrice = prices[sym] ?? 0;
+      final prevPrice = _priceSnapshots[sym];
+      if (prevPrice != null && prevPrice > 0) {
+        final priceChange = (currentPrice - prevPrice).abs() / prevPrice;
+        if (priceChange < 0.005) {
+          final cached = _decisionCache[sym];
+          if (cached != null) {
+            final cachedAction = cached['action'];
+            final cachedConfidence = cached['confidence'];
+            if (cachedAction != 'HOLD' && cachedConfidence > 0.25) {
+              _executeSignals(sym, cached);
+            }
+            continue;
+          }
+        }
+      }
+      _priceSnapshots[sym] = currentPrice;
 
       final ctx = _buildAgentContext(sym);
       final riskReport = RiskAgent().analyze(sym, ctx);
@@ -317,13 +344,16 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       final action = consensus.recommendation ?? 'HOLD';
       final confidence = consensus.confidence;
 
+      final signal = {
+        'action': action,
+        'confidence': confidence,
+        'positionSizePct': 25.0,
+      };
+      _decisionCache[sym] = signal;
+
       // Execute if confidence is reasonable (> 0.25 for rule-based)
       if (confidence > 0.25 && action != 'HOLD') {
-        _executeSignals(sym, {
-          'action': action,
-          'confidence': confidence,
-          'positionSizePct': 25.0,
-        });
+        _executeSignals(sym, signal);
       }
     }
 
@@ -436,6 +466,14 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     final hist = _portfolio.data.history.map((t) => TradeSnapshot(
       side: t.side, symbol: t.sym, qty: t.qty, price: t.price, time: t.time,
     )).toList();
+    final technicals = <String, Map<String, dynamic>>{};
+    for (final sym in symbols) {
+      final k = _market.klinesMap[sym];
+      if (k != null && k.length >= 30) {
+        technicals[sym] = TechnicalAnalysis.analyze(sym, k);
+      }
+    }
+
     return AgentContext(
       prices: Map.from(prices),
       pcts: Map.from(pcts),
@@ -446,6 +484,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       positions: pos,
       history: hist,
       sentiment: _lastSentiment,
+      technicals: technicals,
     );
   }
 
