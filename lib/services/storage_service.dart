@@ -40,7 +40,6 @@ class StorageService {
 
   void _loadDefaultApiKeys() {
     try {
-      final dir = _store.containsKey('noah_users') ? null : null;
       // Read token.txt from documents directory if available
       final file = File('/storage/emulated/0/Documents/token.txt');
       if (file.existsSync()) {
@@ -57,6 +56,9 @@ class StorageService {
               changed = true;
             } else if (provider == 'openrouter' && !keys.containsKey('OpenRouter')) {
               keys['OpenRouter'] = key;
+              changed = true;
+            } else if (provider == 'groq' && !keys.containsKey('Groq')) {
+              keys['Groq'] = key;
               changed = true;
             }
           }

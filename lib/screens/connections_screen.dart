@@ -139,14 +139,14 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
     final savedOpenCodeUrl = widget.chat.getSavedOpenCodeUrl();
     final providers = [
       // ── GROQ ── Ultra-rapide, décisions trading
-      _ProviderData('Groq', 'llama-3.3-70b-versatile', [
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'meta-llama/llama-4-scout-17b-16e-instruct',
-        'qwen/qwen3-32b',
-        'gemma-2-9b-it',
+      _ProviderData('Groq', 'openai/gpt-oss-120b', [
+        'openai/gpt-oss-120b',
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-20b',
+        'groq/compound',
+        'allam-2-7b',
       ], true, const Color(0xFFFF5722), 'Gq', '', free: true, apiUrl: 'https://console.groq.com/keys',
-      description: 'Ultra-rapide (500+ tok/sec) — Décisions trading',
+      description: 'Ultra-rapide — Décisions trading',
       role: 'SPEED'),
 
       // ── GEMINI ── Analyse profonde, long contexte
@@ -161,7 +161,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       _ProviderData('OpenRouter', 'openrouter/auto', [
         'openrouter/auto',
       ], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: false, apiUrl: 'https://openrouter.ai/keys',
-      description: 'Requiert $10+ crédits — Modèles free',
+      description: 'Requiert 10\$+ crédits — Modèles free',
       role: 'FALLBACK'),
 
       // ── OPENCODE LOCAL ── Modèles locaux via OpenCode
