@@ -13,7 +13,7 @@ class LLMChatScreen extends StatefulWidget {
   State<LLMChatScreen> createState() => _LLMChatScreenState();
 }
 
-class _LLMChatScreenState extends State<LLMChatScreen> {
+class _LLMChatScreenState extends State<LLMChatScreen> with SingleTickerProviderStateMixin {
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   final List<Map<String, String>> _messages = [];
