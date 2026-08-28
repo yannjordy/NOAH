@@ -10,6 +10,7 @@ import '../services/cache_service.dart';
 import '../services/storage_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/background_service.dart';
+import '../screens/ai_router_config_screen.dart';
 import '../theme/noah_theme.dart';
 
 class SettingsScreen extends StatefulWidget {

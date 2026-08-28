@@ -7,7 +7,7 @@ enum AIRole { quickDecision, deepAnalysis, fallback }
 class AIProvider {
   final String name;
   final String baseUrl;
-  final String? apiKey;
+  String? apiKey;
   final String model;
   final int maxTokensPerDay;
   final int rpm;
