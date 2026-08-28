@@ -28,6 +28,8 @@ import 'screens/portfolio_screen.dart';
 import 'screens/risk_screen.dart';
 import 'screens/pending_signals_screen.dart';
 import 'screens/ai_router_config_screen.dart';
+import 'screens/llm_chat_screen.dart';
+import 'services/multi_llm_coordinator.dart';
 import 'screens/settings_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/about_screen.dart';
@@ -914,6 +916,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         return PendingSignalsScreen(signalService: _signalService);
       case 10:
         return AIRouterConfigScreen(storage: widget.storage);
+      case 11:
+        return LLMChatScreen(coordinator: MultiLLMCoordinator());
       default:
         return CoreScreen(chat: _chat, goTab: _goTab);
     }
