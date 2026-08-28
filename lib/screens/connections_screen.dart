@@ -157,11 +157,11 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       description: '1M contexte — Analyse profonde',
       role: 'ANALYST'),
 
-      // ── OPENROUTER ── Fallback, modèles variés
+      // ── OPENROUTER ── Nécessite crédits ($10+ pour modèles free)
       _ProviderData('OpenRouter', 'openrouter/auto', [
         'openrouter/auto',
-      ], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: true, apiUrl: 'https://openrouter.ai/keys',
-      description: 'Fallback intelligent — Crédits requis',
+      ], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: false, apiUrl: 'https://openrouter.ai/keys',
+      description: 'Requiert $10+ crédits — Modèles free',
       role: 'FALLBACK'),
 
       // ── OPENCODE LOCAL ── Modèles locaux via OpenCode
