@@ -102,6 +102,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _section('IA Configuration', bg1, border, accent, t2, isDark, [
             _selectRow('IA par défaut', widget.settings.defaultModel, ['DeepSeek', 'OpenAI', 'Claude'], bg2, borderMd, t0, t2, onChanged: (v) => widget.settings.setDefaultModel(v)),
             _selectRow('Mode réponse', widget.settings.responseMode, ['Précis (recommandé)', 'Rapide'], bg2, borderMd, t0, t2, onChanged: (v) => widget.settings.setResponseMode(v)),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AIRouterConfigScreen(storage: widget.storage),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF4CAF8E).withValues(alpha: 0.15),
+                      const Color(0xFF4A90D9).withValues(alpha: 0.15),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF4CAF8E).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.speed, color: Color(0xFF4CAF8E), size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Routeur IA Gratuit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                          Text('Groq + Gemini + OpenRouter', style: TextStyle(fontSize: 10, color: t2)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, size: 14, color: t2),
+                  ],
+                ),
+              ),
+            ),
           ]),
           // Security card
           Container(

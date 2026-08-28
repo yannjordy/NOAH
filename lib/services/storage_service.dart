@@ -275,6 +275,15 @@ class StorageService {
   bool getBiometricLock() => _store['noah_biometric_lock'] == 'true';
   void setBiometricLock(bool v) { _store['noah_biometric_lock'] = v.toString(); _persist(); }
 
+  String getGroqKey() => _store['noah_groq_key'] ?? '';
+  void setGroqKey(String v) { _store['noah_groq_key'] = v; _persist(); }
+
+  String getGeminiKey() => _store['noah_gemini_key'] ?? '';
+  void setGeminiKey(String v) { _store['noah_gemini_key'] = v; _persist(); }
+
+  String getOpenRouterKey() => _store['noah_openrouter_key'] ?? '';
+  void setOpenRouterKey(String v) { _store['noah_openrouter_key'] = v; _persist(); }
+
   // ── Price Cache ──────────────────────────────────────────
   static const _pricesKey = 'noah_cached_prices';
   static const _pctsKey = 'noah_cached_pcts';

@@ -17,6 +17,7 @@ import '../services/deerflow_service.dart';
 import '../services/trading_api_service.dart';
 import '../services/trade_journal_service.dart';
 import '../services/ai_tools.dart';
+import '../services/ai_router_service.dart';
 import '../agents/agents.dart' hide fmt;
 import '../agents/risk_manager.dart';
 
@@ -380,6 +381,7 @@ class ChatProvider extends ChangeNotifier {
   final LlmService _llm;
   final OpenCodeService _openCode;
   final TradeJournalService _journal = TradeJournalService();
+  final AIRouterService _aiRouter = AIRouterService();
 
   TradeJournalService get journal => _journal;
 
@@ -759,7 +761,14 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
 
     try {
       String reply;
-      if (_currentModel.startsWith('opencode/')) {
+      if (_currentModel == 'ai-router') {
+        // Use intelligent router (Groq + Gemini + OpenRouter)
+        reply = await _aiRouter.chat(
+          prompt: prompt,
+          role: AIRole.quickDecision,
+          systemContext: 'Tu es un trader IA professionnel. Réponds en JSON uniquement.',
+        );
+      } else if (_currentModel.startsWith('opencode/')) {
         reply = await _openCode.sendMessage(prompt, systemContext: 'Tu es un trader IA professionnel. Réponds en JSON uniquement.');
       } else {
         reply = await _llm.sendMessage(prompt, systemContext: 'Tu es un trader IA professionnel. Réponds en JSON uniquement.');

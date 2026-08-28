@@ -27,6 +27,7 @@ import 'screens/connections_screen.dart';
 import 'screens/portfolio_screen.dart';
 import 'screens/risk_screen.dart';
 import 'screens/pending_signals_screen.dart';
+import 'screens/ai_router_config_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/about_screen.dart';
@@ -911,6 +912,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         return const AboutScreen();
       case 9:
         return PendingSignalsScreen(signalService: _signalService);
+      case 10:
+        return AIRouterConfigScreen(storage: widget.storage);
       default:
         return CoreScreen(chat: _chat, goTab: _goTab);
     }
