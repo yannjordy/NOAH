@@ -109,7 +109,6 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     });
     _risk = RiskProvider(storage: widget.storage);
     _market = MarketService();
-    _settings = SettingsProvider(widget.storage);
 
     // Auto-lock on startup if biometric lock is enabled
     if (_settings.biometricLock) {

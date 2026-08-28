@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/providers.dart';
 import '../theme/noah_theme.dart';
 
-const _incompatibleApis = {'Anthropic Claude', 'Google Gemini', 'Meta LLaMA', 'Replicate'};
+const _incompatibleApis = {'Binance API'};
 
 class ConnectionsScreen extends StatefulWidget {
   final AuthProvider auth;
