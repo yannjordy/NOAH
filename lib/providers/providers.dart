@@ -432,6 +432,7 @@ class ChatProvider extends ChangeNotifier {
       _connectedModels['NOAH Trading Core'] = 'trading-core';
     }
     _restoreBinance();
+    _restoreLlmConfig();
     // Load trade journal from storage
     _journal.loadFromJson(_storage.getTradeJournal());
     _journal.loadMemory(_storage.getEvolvedMemory());
@@ -479,6 +480,23 @@ class ChatProvider extends ChangeNotifier {
       _binance.configure(apiKey, secretKey, testnet: testnet);
       _connectedModels['Binance API'] = 'binance';
       _storage.saveConnectedModels(_connectedModels);
+    }
+  }
+
+  void _restoreLlmConfig() {
+    final keys = _storage.getApiKeys();
+    // Find first available configured provider
+    for (final entry in _connectedModels.entries) {
+      final providerName = entry.key;
+      final model = entry.value;
+      if (providerName == 'NOAH Trading Core' || providerName == 'Binance API' || providerName == 'OpenCode Local') continue;
+      final apiKey = keys[providerName] ?? '';
+      if (apiKey.isNotEmpty && providerBaseUrls.containsKey(providerName)) {
+        final baseUrl = providerBaseUrls[providerName]!;
+        _llm.updateConfig(baseUrl: baseUrl, apiKey: apiKey, model: model);
+        _currentModel = model;
+        break;
+      }
     }
   }
 

@@ -150,29 +150,18 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
       role: 'SPEED'),
 
       // ── GEMINI ── Analyse profonde, long contexte
-      _ProviderData('Google Gemini', 'gemini-3.7-flash', [
-        'gemini-3.7-flash',
-        'gemini-3.1-flash-lite',
-        'gemini-2.5-flash',
+      _ProviderData('Google Gemini', 'gemini-3.6-flash', [
+        'gemini-3.6-flash',
+        'gemini-3.5-flash-lite',
       ], false, const Color(0xFF4285F4), 'Gm', 'AIza...', free: true, apiUrl: 'https://aistudio.google.com/apikey',
-      description: '1M contexte — Analyse approfondie',
+      description: '1M contexte — Analyse profonde',
       role: 'ANALYST'),
 
-      // ── OPENROUTER ── Fallback, modèles free variés
+      // ── OPENROUTER ── Fallback, modèles variés
       _ProviderData('OpenRouter', 'openrouter/auto', [
         'openrouter/auto',
-        'google/gemma-4-31b-it:free',
-        'nvidia/nemotron-3-ultra-550b-a55b:free',
-        'nvidia/nemotron-3-nano-30b-a3b:free',
-        'openai/gpt-oss-120b:free',
-        'openai/gpt-oss-20b:free',
-        'qwen/qwen3-coder:free',
-        'google/gemma-4-26b-a4b-it:free',
-        'nvidia/nemotron-nano-9b-v2:free',
-        'poolside/laguna-s-2.1:free',
-        'cohere/north-mini-code:free',
       ], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: true, apiUrl: 'https://openrouter.ai/keys',
-      description: '25+ modèles free — Fallback intelligent',
+      description: 'Fallback intelligent — Crédits requis',
       role: 'FALLBACK'),
 
       // ── OPENCODE LOCAL ── Modèles locaux via OpenCode

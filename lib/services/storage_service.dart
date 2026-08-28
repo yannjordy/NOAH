@@ -35,6 +35,43 @@ class StorageService {
         }
       } catch (_) {}
     }
+    _loadDefaultApiKeys();
+  }
+
+  void _loadDefaultApiKeys() {
+    try {
+      final dir = _store.containsKey('noah_users') ? null : null;
+      // Read token.txt from documents directory if available
+      final file = File('/storage/emulated/0/Documents/token.txt');
+      if (file.existsSync()) {
+        final lines = file.readAsLinesSync();
+        final keys = getApiKeys();
+        bool changed = false;
+        for (final line in lines) {
+          final parts = line.split(':');
+          if (parts.length >= 2) {
+            final provider = parts[0].trim();
+            final key = parts.sublist(1).join(':').trim();
+            if (provider == 'gemini' && !keys.containsKey('Google Gemini')) {
+              keys['Google Gemini'] = key;
+              changed = true;
+            } else if (provider == 'openrouter' && !keys.containsKey('OpenRouter')) {
+              keys['OpenRouter'] = key;
+              changed = true;
+            }
+          }
+        }
+        if (changed) saveApiKeys(keys);
+
+        // Auto-connect Gemini if no model connected
+        final models = _store[_modelsKey];
+        if (models == null || models.isEmpty || models == '{}') {
+          final defaultModels = {'Google Gemini': 'gemini-3.6-flash'};
+          _store[_modelsKey] = jsonEncode(defaultModels);
+          _persist();
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _persist() async {

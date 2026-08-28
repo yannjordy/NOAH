@@ -9,7 +9,7 @@ class LlmService {
   LlmService({String baseUrl = 'https://api.openai.com/v1', String apiKey = '', String model = 'gpt-4o'})
       : _dio = Dio(BaseOptions(
           baseUrl: baseUrl,
-          connectTimeout: const Duration(seconds: 15),
+          connectTimeout: const Duration(seconds: 20),
           receiveTimeout: const Duration(seconds: 120),
           headers: {'Content-Type': 'application/json'},
           validateStatus: (_) => true,
@@ -23,6 +23,8 @@ class LlmService {
   String get apiKey => _apiKey;
   set apiKey(String k) => _apiKey = k;
 
+  bool get _isGemini => _dio.options.baseUrl.contains('googleapis.com');
+
   void updateConfig({String? baseUrl, String? apiKey, String? model}) {
     if (baseUrl != null) _dio.options.baseUrl = baseUrl;
     if (apiKey != null) _apiKey = apiKey;
@@ -31,6 +33,11 @@ class LlmService {
 
   Future<bool> healthCheck() async {
     try {
+      if (_isGemini) {
+        final resp = await _dio.get('/models',
+            options: Options(headers: {'x-goog-api-key': _apiKey}));
+        return resp.statusCode == 200;
+      }
       final resp = await _dio.get('/models',
           options: Options(headers: {'Authorization': 'Bearer $_apiKey'}));
       return resp.statusCode == 200;
@@ -43,6 +50,57 @@ class LlmService {
     if (_apiKey.isEmpty) {
       return '❌ Clé API non configurée. Allez dans Connexions pour ajouter votre clé.';
     }
+
+    if (_isGemini) {
+      return _sendGemini(text, systemContext: systemContext, images: images);
+    }
+    return _sendOpenAI(text, systemContext: systemContext, images: images);
+  }
+
+  Future<String> _sendGemini(String text, {String? systemContext, List<String>? images}) async {
+    try {
+      final parts = <Map<String, dynamic>>[];
+      if (systemContext != null && systemContext.isNotEmpty) {
+        parts.add({'text': '$systemContext\n\n$text'});
+      } else {
+        parts.add({'text': text});
+      }
+      if (images != null) {
+        for (final img in images) {
+          parts.add({
+            'inline_data': {
+              'mime_type': 'image/jpeg',
+              'data': img.startsWith('http') ? img : img,
+            },
+          });
+        }
+      }
+
+      final url = '/models/$_model:generateContent?key=$_apiKey';
+      final resp = await _dio.post(url, data: {
+        'contents': [{'role': 'user', 'parts': parts}],
+        'generationConfig': {
+          'temperature': 0.7,
+          'maxOutputTokens': 2048,
+        },
+      });
+
+      if (resp.statusCode != 200) {
+        final err = resp.data is Map ? (resp.data['error']?['message'] ?? '') : '';
+        return '❌ Erreur Gemini (${resp.statusCode}): $err';
+      }
+
+      final candidates = resp.data['candidates'] as List? ?? [];
+      if (candidates.isEmpty) return '⚠️ Réponse vide';
+      final content = candidates[0]['content']?['parts'] as List? ?? [];
+      if (content.isEmpty) return '⚠️ Réponse vide';
+      return content[0]['text'] as String? ?? '⚠️ Réponse vide';
+    } catch (e) {
+      return '❌ Erreur Gemini: $e';
+    }
+  }
+
+  Future<String> _sendOpenAI(String text, {String? systemContext, List<String>? images}) async {
     try {
       final userContent = <Map<String, dynamic>>[
         {'type': 'text', 'text': text},
@@ -66,6 +124,7 @@ class LlmService {
       final resp = await _dio.post('/chat/completions', data: {
         'model': _model,
         'messages': messages,
+        'max_tokens': 2048,
         'stream': false,
       }, options: Options(headers: {
         'Authorization': 'Bearer $_apiKey',
@@ -76,9 +135,10 @@ class LlmService {
       }));
       if (resp.statusCode != 200) {
         if (resp.statusCode == 402) {
-          return '❌ Erreur 402 — Crédits insuffisants. Ajoute des fonds sur OpenRouter pour utiliser ce modèle.';
+          return '❌ Erreur 402 — Crédits insuffisants. Ajoute des fonds sur OpenRouter.';
         }
-        return '❌ Erreur API (${resp.statusCode}): ${resp.statusMessage}';
+        final err = resp.data is Map ? (resp.data['error']?['message'] ?? '') : '';
+        return '❌ Erreur API (${resp.statusCode}): ${err.isNotEmpty ? err : resp.statusMessage}';
       }
       final data = resp.data is Map ? resp.data as Map : jsonDecode(resp.data as String) as Map;
       final choices = data['choices'] as List? ?? [];

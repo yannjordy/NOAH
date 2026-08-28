@@ -64,7 +64,7 @@ class AIRouterService {
     name: 'Gemini',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     apiKey: null, // Set by user
-    model: 'gemini-3.7-flash',
+    model: 'gemini-3.6-flash',
     maxTokensPerDay: 1500,
     rpm: 15,
   );
