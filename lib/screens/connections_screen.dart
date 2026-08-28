@@ -138,25 +138,44 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
   Widget build(BuildContext context) {
     final savedOpenCodeUrl = widget.chat.getSavedOpenCodeUrl();
     final providers = [
-      _ProviderData('OpenAI', 'gpt-4o', ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1', 'o1-mini'], false, const Color(0xFF10A37F), 'AI', 'sk-proj-...', apiUrl: 'https://platform.openai.com/api-keys'),
-      _ProviderData('DeepSeek', 'deepseek-chat', ['deepseek-chat', 'deepseek-reasoner', 'deepseek-chat-v3'], true, const Color(0xFF4D6BFE), 'DS', 'sk-...', apiUrl: 'https://platform.deepseek.com/api_keys'),
-      _ProviderData('DeepSeek Flash', 'deepseek-chat', ['deepseek-chat', 'deepseek-reasoner', 'deepseek-chat-v3'], true, const Color(0xFF4D6BFE), 'DF', 'sk-...', free: true, apiUrl: 'https://platform.deepseek.com/api_keys'),
-      _ProviderData('Anthropic Claude', 'claude-3-5-sonnet', ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-2.1'], false, const Color(0xFFCC7833), 'AN', 'sk-ant-...', apiUrl: 'https://console.anthropic.com/keys'),
-      _ProviderData('Google Gemini', 'gemini-1.5-pro', ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro', 'gemma-2-27b', 'gemma-2-9b'], false, const Color(0xFF4285F4), 'Gm', 'AIza...', apiUrl: 'https://aistudio.google.com/apikey'),
-      _ProviderData('Meta LLaMA', 'llama-3.1-405b', ['llama-3.1-405b', 'llama-3.1-70b', 'llama-3.1-8b', 'llama-3-70b', 'llama-3-8b', 'code-llama-34b'], true, const Color(0xFF1877F2), 'Ml', '', free: true, apiUrl: 'https://llama.meta.com/'),
-      _ProviderData('Mistral AI', 'mistral-large-2', ['mistral-large-2', 'mistral-small', 'mixtral-8x22b', 'mixtral-8x7b', 'codestral-22b'], false, const Color(0xFFFF6B35), 'Ms', '', apiUrl: 'https://console.mistral.ai/api-keys/'),
-      _ProviderData('xAI Grok', 'grok-2', ['grok-2', 'grok-1'], false, const Color(0xFF1C1C1C), 'Gk', '', apiUrl: 'https://x.ai/api'),
-      _ProviderData('Perplexity', 'sonar-medium', ['sonar-pro', 'sonar-medium', 'mixtral-8x22b-perp'], false, const Color(0xFF5436DB), 'Pe', '', apiUrl: 'https://www.perplexity.ai/settings/api'),
-      _ProviderData('Cohere', 'command-r+', ['command-r+', 'command-r', 'command-light'], false, const Color(0xFF3952FF), 'Co', '', apiUrl: 'https://dashboard.cohere.com/api-keys'),
-      _ProviderData('AI21 Labs', 'jamba-1.5-large', ['jamba-1.5-large', 'jamba-1.5-mini'], false, const Color(0xFF00A3FF), '21', '', apiUrl: 'https://www.ai21.com/studio'),
-      _ProviderData('Groq', 'llama-3.3-70b-versatile', ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b'], true, const Color(0xFFFF5722), 'Gq', '', free: true, apiUrl: 'https://console.groq.com/keys'),
-      _ProviderData('Together AI', 'meta-llama-3.1-405b', ['meta-llama-3.1-405b', 'meta-llama-3.1-70b', 'mistral-8x22b', 'deepseek-llm-67b'], false, const Color(0xFF6B21A8), 'TA', '', apiUrl: 'https://api.together.xyz/settings/api-keys'),
-      _ProviderData('Fireworks AI', 'llama-v3p1-405b', ['llama-v3p1-405b', 'llama-v3p1-70b', 'deepseek-v3', 'mixtral-8x22b'], true, const Color(0xFFFF6B35), 'Fw', '', free: true, apiUrl: 'https://fireworks.ai/api-keys'),
-      _ProviderData('Replicate', 'meta-llama-3.1-70b', ['meta-llama-3.1-405b', 'meta-llama-3.1-70b', 'mixtral-8x7b', 'claude-3-sonnet'], false, const Color(0xFF667788), 'Rp', 'r8-...', apiUrl: 'https://replicate.com/account/api-tokens'),
-      _ProviderData('OpenRouter', 'openrouter/auto', ['openrouter/auto', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-405b-instruct'], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: true, apiUrl: 'https://openrouter.ai/keys'),
-      _ProviderData('Lepton AI', 'llama-3.1-70b', ['llama-3.1-405b', 'llama-3.1-70b', 'llama-3.1-8b'], false, const Color(0xFF4F46E5), 'Le', '', apiUrl: 'https://dashboard.lepton.ai/'),
-      _ProviderData('Novita AI', 'llama-3.1-70b', ['llama-3.1-405b', 'llama-3.1-70b', 'deepseek-v3', 'mixtral-8x22b'], false, const Color(0xFF10B981), 'Nv', '', apiUrl: 'https://novita.ai/api-key'),
-      _ProviderData('Hugging Face', 'HuggingFaceH4/zephyr-7b-beta', ['HuggingFaceH4/zephyr-7b-beta', 'mistralai/Mistral-7B-Instruct-v0.3', 'meta-llama/Llama-3.2-3B-Instruct'], true, const Color(0xFFFFBF00), 'HF', '', free: true, apiUrl: 'https://huggingface.co/settings/tokens'),
+      // ── GROQ ── Ultra-rapide, décisions trading
+      _ProviderData('Groq', 'llama-3.3-70b-versatile', [
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'meta-llama/llama-4-scout-17b-16e-instruct',
+        'qwen/qwen3-32b',
+        'gemma-2-9b-it',
+      ], true, const Color(0xFFFF5722), 'Gq', '', free: true, apiUrl: 'https://console.groq.com/keys',
+      description: 'Ultra-rapide (500+ tok/sec) — Décisions trading',
+      role: 'SPEED'),
+
+      // ── GEMINI ── Analyse profonde, long contexte
+      _ProviderData('Google Gemini', 'gemini-3.7-flash', [
+        'gemini-3.7-flash',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-flash',
+      ], false, const Color(0xFF4285F4), 'Gm', 'AIza...', free: true, apiUrl: 'https://aistudio.google.com/apikey',
+      description: '1M contexte — Analyse approfondie',
+      role: 'ANALYST'),
+
+      // ── OPENROUTER ── Fallback, modèles free variés
+      _ProviderData('OpenRouter', 'openrouter/auto', [
+        'openrouter/auto',
+        'google/gemma-4-31b-it:free',
+        'nvidia/nemotron-3-ultra-550b-a55b:free',
+        'nvidia/nemotron-3-nano-30b-a3b:free',
+        'openai/gpt-oss-120b:free',
+        'openai/gpt-oss-20b:free',
+        'qwen/qwen3-coder:free',
+        'google/gemma-4-26b-a4b-it:free',
+        'nvidia/nemotron-nano-9b-v2:free',
+        'poolside/laguna-s-2.1:free',
+        'cohere/north-mini-code:free',
+      ], false, const Color(0xFF6461FF), 'OR', 'sk-or-...', free: true, apiUrl: 'https://openrouter.ai/keys',
+      description: '25+ modèles free — Fallback intelligent',
+      role: 'FALLBACK'),
+
+      // ── OPENCODE LOCAL ── Modèles locaux via OpenCode
       _ProviderData('OpenCode Local', widget.chat.currentModel.startsWith('opencode/') ? widget.chat.currentModel : 'google/gemma-4-31b-it:free', _opencodeModels[18] ?? const [
         'google/gemma-4-31b-it:free',
         'nvidia/nemotron-3-ultra-550b-a55b:free',
@@ -166,10 +185,22 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
         'poolside/laguna-s-2.1:free',
         'cohere/north-mini-code:free',
         'nvidia/nemotron-3.5-lightning:free',
-      ], false, const Color(0xFF00D4AA), 'OC', '', free: true, apiUrl: 'https://opencode.ai', baseUrl: savedOpenCodeUrl.isNotEmpty ? savedOpenCodeUrl : 'http://localhost:4096'),
+      ], false, const Color(0xFF00D4AA), 'OC', '', free: true, apiUrl: 'https://opencode.ai',
+      description: 'Modèles locaux — Illimité, offline',
+      role: 'LOCAL'),
+
+      // ── HUGGING FACE ── Modèles open-source
+      _ProviderData('Hugging Face', 'HuggingFaceH4/zephyr-7b-beta', [
+        'HuggingFaceH4/zephyr-7b-beta',
+        'mistralai/Mistral-7B-Instruct-v0.3',
+        'meta-llama/Llama-3.2-3B-Instruct',
+        'google/gemma-2-9b-it',
+      ], true, const Color(0xFFFFBF00), 'HF', '', free: true, apiUrl: 'https://huggingface.co/settings/tokens',
+      description: 'Open-source — Modèles communautaires',
+      role: 'COMMUNITY'),
+
+      // ── BINANCE ── Exchange (pas un LLM)
       _ProviderData('Binance API', '', [], false, const Color(0xFFF0B90B), 'BN', 'Clé API', hasSecret: true, apiUrl: 'https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'),
-      _ProviderData('DeerFlow Agent', 'deerflow-agent', ['deerflow-agent'], false, const Color(0xFF22C55E), 'Df', 'http://localhost:2026', free: true, apiUrl: 'https://github.com/anomalyco/opencode'),
-      _ProviderData('NOAH Trading Core', 'trading-core', ['trading-core'], false, const Color(0xFFB08D57), 'NC', 'http://localhost:8001', free: true, apiUrl: null),
     ];
 
     return ListenableBuilder(
@@ -518,8 +549,10 @@ class _ProviderData {
   final bool hasSecret;
   final String? apiUrl;
   String? baseUrl;
+  final String? description;
+  final String? role;
 
   _ProviderData(this.name, this.model, this.models, this.connected, this.color,
       this.initials, this.placeholder,
-      {this.free = false, this.hasSecret = false, this.apiUrl, this.baseUrl});
+      {this.free = false, this.hasSecret = false, this.apiUrl, this.baseUrl, this.description, this.role});
 }
