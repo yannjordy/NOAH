@@ -524,6 +524,12 @@ class ChatProvider extends ChangeNotifier {
   Map<String, String> get connectedModels => Map.unmodifiable(_connectedModels);
   String get currentModel => _currentModel;
 
+  bool get isLlmConnected {
+    if (_llm.apiKey.isNotEmpty) return true;
+    if (_currentModel.startsWith('opencode/') && _openCode.isConnected) return true;
+    return false;
+  }
+
   String getSavedApiKey(String providerName) => _storage.getApiKeys()[providerName] ?? '';
 
   void updateOpenCodeUrl(String url) {

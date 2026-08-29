@@ -251,7 +251,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   void _runAgentCycle() {
     if (!_chat.tradingEnabled) return;
 
-    final hasAiBrain = _chat.openCode.isConnected;
+    final hasAiBrain = _chat.openCode.isConnected || _chat.isLlmConnected;
     const cooldown = Duration(seconds: 30);
 
     // ── BRANCH A: AI scan (only when LLM connected) ──
