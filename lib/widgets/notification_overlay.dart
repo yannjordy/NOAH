@@ -13,7 +13,9 @@ class NotificationOverlay extends StatefulWidget {
 class _NotificationOverlayState extends State<NotificationOverlay>
     with SingleTickerProviderStateMixin {
   StreamSubscription<AppNotification>? _sub;
+  final List<AppNotification> _queue = [];
   AppNotification? _current;
+  bool _isShowing = false;
   late AnimationController _animCtrl;
   late Animation<Offset> _slideAnim;
 
@@ -32,12 +34,28 @@ class _NotificationOverlayState extends State<NotificationOverlay>
   }
 
   void _onNotification(AppNotification notif) {
+    _queue.add(notif);
+    if (!_isShowing) {
+      _showNext();
+    }
+  }
+
+  void _showNext() {
+    if (_queue.isEmpty) {
+      _isShowing = false;
+      return;
+    }
+    _isShowing = true;
+    final notif = _queue.removeAt(0);
     setState(() => _current = notif);
     _animCtrl.forward();
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         _animCtrl.reverse().then((_) {
-          if (mounted) setState(() => _current = null);
+          if (mounted) {
+            setState(() => _current = null);
+            _showNext();
+          }
         });
       }
     });

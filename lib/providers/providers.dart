@@ -253,7 +253,7 @@ class AuthProvider extends ChangeNotifier {
 // ─── Settings Provider ───────────────────────────────
 class SettingsProvider extends ChangeNotifier {
   final StorageService _storage;
-  bool _isDark = false;
+  bool _isDark = true;
   bool _isDemo = true;
   bool _termsAccepted = false;
   bool _notifyTrades = false;

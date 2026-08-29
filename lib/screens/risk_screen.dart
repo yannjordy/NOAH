@@ -22,112 +22,105 @@ class RiskScreen extends StatelessWidget {
     final red = isDark ? const Color(0xFFE07060) : const Color(0xFFB8453A);
     final redBg = red.withValues(alpha: 0.1);
 
-    final rm = portfolio.riskManager;
-    final perf = portfolio.analyzer;
-    final cbActive = portfolio.circuitBreakerActive;
-    final rmData = rm.toJson();
-
     return Container(
       color: bg0,
-      child: ListView(
-        padding: const EdgeInsets.all(14),
-        children: [
-          // Risk status + Kelly score
-          Row(
+      child: ListenableBuilder(
+        listenable: Listenable.merge([risk, portfolio]),
+        builder: (context, _) {
+          final rm = portfolio.riskManager;
+          final perf = portfolio.analyzer;
+          final cbActive = portfolio.circuitBreakerActive;
+          final rmData = rm.toJson();
+          return ListView(
+            padding: const EdgeInsets.all(14),
             children: [
-              Expanded(
-                child: _statusCard(
-                  rmData['riskLabel'] as String,
-                  'Niveau de risque',
-                  (rmData['riskLabel'] == 'CRITIQUE') ? red : (rmData['riskLabel'] == 'ÉLEVÉ' ? const Color(0xFFD4A84B) : green),
-                  bg1, border, t2, isDark, (rmData['exposurePct'] as double) / 100,
-                ),
-              ),
-              const SizedBox(width: 10),
-              if (cbActive)
-                GestureDetector(
-                  onTap: () => portfolio.resetCircuitBreaker(),
-                  child: Container(
-                    width: 60, height: 60,
-                    decoration: BoxDecoration(color: redBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: red.withValues(alpha: 0.3))),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.warning, size: 18, color: red),
-                        Text('Reset', style: TextStyle(fontSize: 8, color: red, fontWeight: FontWeight.w700)),
-                      ],
+              Row(
+                children: [
+                  Expanded(
+                    child: _statusCard(
+                      rmData['riskLabel'] as String,
+                      'Niveau de risque',
+                      (rmData['riskLabel'] == 'CRITIQUE') ? red : (rmData['riskLabel'] == 'ÉLEVÉ' ? const Color(0xFFD4A84B) : green),
+                      bg1, border, t2, isDark, (rmData['exposurePct'] as double) / 100,
                     ),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Risk metrics grid
-          _section('Métriques de Risque', bg1, border, accent, t2, isDark, [
-            _metricRow('Exposition', '${(rmData['exposurePct'] as double).toStringAsFixed(1)}%', 'Limite: 70%', t0, t2, accent),
-            _metricRow('Drawdown Max', '${(rmData['maxDrawdown'] as double).toStringAsFixed(1)}%', 'Limite: 30%', t0, t2, (rmData['maxDrawdown'] as double) > 15 ? red : green),
-            _metricRow('Risque Corrélation', '${((rmData['correlationRisk'] as double) * 100).toStringAsFixed(0)}%', 'Limite: 40%', t0, t2, (rmData['correlationRisk'] as double) > 0.4 ? red : green),
-            _metricRow('Kelly Suggéré', '${((rmData['kellySuggested'] as double) * 100).toStringAsFixed(1)}%', 'Taille optimale par trade', t0, t2, accent),
-          ]),
-          const SizedBox(height: 10),
-          // Daily loss + Circuit breaker
-          _section('Protections', bg1, border, accent, t2, isDark, [
-            _metricRow('Perte du jour', '\$${(portfolio.dailyLoss).toStringAsFixed(2)}', circuitBreakerStatus(portfolio.dailyLoss, portfolio.data.totalDeposits), t0, t2, portfolio.dailyLoss > 0 ? red : green),
-            _toggleRow('Circuit Breaker', 'Arrêt si perte > ${risk.maxDailyLossPct.toInt()}%', risk.circuitBreaker, (v) => risk.setCircuitBreaker(v), accent, bg3, t0, t2),
-          ]),
-          const SizedBox(height: 10),
-
-          // Performance metrics
-          if (perf != null && perf.totalTrades > 0) ...[
-            _section('Performance', bg1, border, accent, t2, isDark, [
-              _metricRow('Win Rate', '${(perf.winRate * 100).toStringAsFixed(1)}%', '${perf.wins} G / ${perf.losses} P', t0, t2, perf.winRate > 0.5 ? green : red),
-              _metricRow('Avg Gain', '\$${perf.avgWin.toStringAsFixed(2)}', 'Avg Perte: \$${perf.avgLoss.toStringAsFixed(2)}', t0, t2, perf.avgWin > perf.avgLoss ? green : red),
-              _metricRow('Profit Factor', perf.profitFactor.toStringAsFixed(2), '>1.5 = bon', t0, t2, perf.profitFactor > 1.5 ? green : red),
-              _metricRow('Expectancy', '\$${perf.expectancy.toStringAsFixed(2)}', 'Espérance par trade', t0, t2, perf.expectancy > 0 ? green : red),
-              _metricRow('Sharpe Ratio', perf.sharpeRatio.toStringAsFixed(2), '>1 = bon, >2 = excellent', t0, t2, perf.sharpeRatio > 1 ? green : red),
-              _metricRow('Sortino Ratio', perf.sortinoRatio.toStringAsFixed(2), 'Downside risk ajusté', t0, t2, perf.sortinoRatio > 1 ? green : red),
-            ]),
-            const SizedBox(height: 10),
-          ],
-
-          // Portfolio stats
-          _section('Statistiques Portefeuille', bg1, border, accent, t2, isDark, [
-            _metricRow('Total Trades', '${perf?.totalTrades ?? 0}', 'Dont ${perf?.wins ?? 0} gagnants', t0, t2, accent),
-            _metricRow('Plus gros Gain', '\$${portfolio.data.bestTrade.toStringAsFixed(2)}', 'Best trade', t0, t2, green),
-            _metricRow('Plus grosse Perte', '\$${portfolio.data.worstTrade.toStringAsFixed(2)}', 'Worst trade', t0, t2, red),
-            _metricRow('P&L Non Réalisé', '\$${(rmData['unrealizedPnl'] as double).toStringAsFixed(2)}', '${(rmData['unrealizedPnlPct'] as double).toStringAsFixed(1)}%', t0, t2, (rmData['unrealizedPnl'] as double) >= 0 ? green : red),
-          ]),
-          const SizedBox(height: 10),
-
-          // Limits
-          _section('Limites', bg1, border, accent, t2, isDark, [
-            _riskSlider('Taille max / trade', '${risk.maxTradePct.toInt()}%', risk.maxTradePct, 1, 50, accent, bg3, t0, t2, (v) => risk.setMaxTradePct(v)),
-            _riskSlider('Stop loss défaut', '${risk.stopLossPct.toInt()}%', risk.stopLossPct, 1, 20, red, bg3, t0, t2, (v) => risk.setStopLossPct(v)),
-            _riskSlider('Perte journalière max', '${risk.maxDailyLossPct.toInt()}%', risk.maxDailyLossPct, 5, 50, red, bg3, t0, t2, (v) => risk.setMaxDailyLossPct(v)),
-            const SizedBox(height: 8),
-            _sectionLine(bg3),
-            _toggleRow('Auto-trading', 'Exécution automatique des signaux', risk.autoTrade, (v) => risk.setAutoTrade(v), accent, bg3, t0, t2),
-          ]),
-          const SizedBox(height: 10),
-          // Lock button
-          GestureDetector(
-            onTap: () => portfolio.closeAll(),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(16)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.lock, size: 14, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text('Lock All Positions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                  const SizedBox(width: 10),
+                  if (cbActive)
+                    GestureDetector(
+                      onTap: () => portfolio.resetCircuitBreaker(),
+                      child: Container(
+                        width: 60, height: 60,
+                        decoration: BoxDecoration(color: redBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: red.withValues(alpha: 0.3))),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.warning, size: 18, color: red),
+                            Text('Reset', style: TextStyle(fontSize: 8, color: red, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 10),
+              _section('Métriques de Risque', bg1, border, accent, t2, isDark, [
+                _metricRow('Exposure', '${(rmData['exposurePct'] as double).toStringAsFixed(1)}%', 'Limite: 70%', t0, t2, accent),
+                _metricRow('Drawdown Max', '${(rmData['maxDrawdown'] as double).toStringAsFixed(1)}%', 'Limite: 30%', t0, t2, (rmData['maxDrawdown'] as double) > 15 ? red : green),
+                _metricRow('Risque Corrélation', '${((rmData['correlationRisk'] as double) * 100).toStringAsFixed(0)}%', 'Limite: 40%', t0, t2, (rmData['correlationRisk'] as double) > 0.4 ? red : green),
+                _metricRow('Kelly Suggéré', '${((rmData['kellySuggested'] as double) * 100).toStringAsFixed(1)}%', 'Taille optimale par trade', t0, t2, accent),
+              ]),
+              const SizedBox(height: 10),
+              _section('Protections', bg1, border, accent, t2, isDark, [
+                _metricRow('Perte du jour', '\$${(portfolio.dailyLoss).toStringAsFixed(2)}', circuitBreakerStatus(portfolio.dailyLoss, portfolio.data.totalDeposits), t0, t2, portfolio.dailyLoss > 0 ? red : green),
+                _toggleRow('Circuit Breaker', 'Arrêt si perte > ${risk.maxDailyLossPct.toInt()}%', risk.circuitBreaker, (v) => risk.setCircuitBreaker(v), accent, bg3, t0, t2),
+              ]),
+              const SizedBox(height: 10),
+              if (perf != null && perf.totalTrades > 0) ...[
+                _section('Performance', bg1, border, accent, t2, isDark, [
+                  _metricRow('Win Rate', '${(perf.winRate * 100).toStringAsFixed(1)}%', '${perf.wins} G / ${perf.losses} P', t0, t2, perf.winRate > 0.5 ? green : red),
+                  _metricRow('Avg Gain', '\$${perf.avgWin.toStringAsFixed(2)}', 'Avg Perte: \$${perf.avgLoss.toStringAsFixed(2)}', t0, t2, perf.avgWin > perf.avgLoss ? green : red),
+                  _metricRow('Profit Factor', perf.profitFactor.toStringAsFixed(2), '>1.5 = bon', t0, t2, perf.profitFactor > 1.5 ? green : red),
+                  _metricRow('Expectancy', '\$${perf.expectancy.toStringAsFixed(2)}', 'Espérance par trade', t0, t2, perf.expectancy > 0 ? green : red),
+                  _metricRow('Sharpe Ratio', perf.sharpeRatio.toStringAsFixed(2), '>1 = bon, >2 = excellent', t0, t2, perf.sharpeRatio > 1 ? green : red),
+                  _metricRow('Sortino Ratio', perf.sortinoRatio.toStringAsFixed(2), 'Downside risk ajusté', t0, t2, perf.sortinoRatio > 1 ? green : red),
+                ]),
+                const SizedBox(height: 10),
+              ],
+              _section('Statistiques Portefeuille', bg1, border, accent, t2, isDark, [
+                _metricRow('Total Trades', '${perf?.totalTrades ?? 0}', 'Dont ${perf?.wins ?? 0} gagnants', t0, t2, accent),
+                _metricRow('Plus gros Gain', '\$${portfolio.data.bestTrade.toStringAsFixed(2)}', 'Best trade', t0, t2, green),
+                _metricRow('Plus grosse Perte', '\$${portfolio.data.worstTrade.toStringAsFixed(2)}', 'Worst trade', t0, t2, red),
+                _metricRow('P&L Non Réalisé', '\$${(rmData['unrealizedPnl'] as double).toStringAsFixed(2)}', '${(rmData['unrealizedPnlPct'] as double).toStringAsFixed(1)}%', t0, t2, (rmData['unrealizedPnl'] as double) >= 0 ? green : red),
+              ]),
+              const SizedBox(height: 10),
+              _section('Limites', bg1, border, accent, t2, isDark, [
+                _riskSlider('Taille max / trade', '${risk.maxTradePct.toInt()}%', risk.maxTradePct, 1, 50, accent, bg3, t0, t2, (v) => risk.setMaxTradePct(v)),
+                _riskSlider('Stop loss défaut', '${risk.stopLossPct.toInt()}%', risk.stopLossPct, 1, 20, red, bg3, t0, t2, (v) => risk.setStopLossPct(v)),
+                _riskSlider('Perte journalière max', '${risk.maxDailyLossPct.toInt()}%', risk.maxDailyLossPct, 5, 50, red, bg3, t0, t2, (v) => risk.setMaxDailyLossPct(v)),
+                const SizedBox(height: 8),
+                _sectionLine(bg3),
+                _toggleRow('Auto-trading', 'Exécution automatique des signaux', risk.autoTrade, (v) => risk.setAutoTrade(v), accent, bg3, t0, t2),
+              ]),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => portfolio.closeAll(),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(16)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock, size: 14, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text('Lock All Positions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

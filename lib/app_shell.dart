@@ -208,14 +208,17 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Only authenticate on resume if already locked (manual lock)
+      // Always try to authenticate when coming back to foreground
       if (_isLocked) {
         _authenticateBiometric();
       }
     } else if (state == AppLifecycleState.paused) {
       // Save prices before going to background
       widget.storage.cachePrices();
-      // Don't auto-lock - just start background service
+      // Auto-lock when app goes to background
+      if (_settings.biometricLock) {
+        setState(() => _isLocked = true);
+      }
       BackgroundService.start();
       _runAgentCycle();
     }
