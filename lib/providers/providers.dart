@@ -16,6 +16,7 @@ import '../services/storage_service.dart';
 import '../services/deerflow_service.dart';
 import '../services/trading_api_service.dart';
 import '../services/trade_journal_service.dart';
+import '../services/learning_cache.dart';
 import '../services/ai_tools.dart';
 import '../services/ai_router_service.dart';
 import '../agents/agents.dart' hide fmt;
@@ -381,6 +382,7 @@ class ChatProvider extends ChangeNotifier {
   final LlmService _llm;
   final OpenCodeService _openCode;
   final TradeJournalService _journal = TradeJournalService();
+  late LearningCache _learningCache;
   final AIRouterService _aiRouter = AIRouterService();
 
   TradeJournalService get journal => _journal;
@@ -436,6 +438,7 @@ class ChatProvider extends ChangeNotifier {
     // Load trade journal from storage
     _journal.loadFromJson(_storage.getTradeJournal());
     _journal.loadMemory(_storage.getEvolvedMemory());
+    _learningCache = LearningCache(_storage);
     // Set OpenCode as the brain for the main trading agent
     _mainAgent.setBrain((prompt, {String? systemContext}) {
       return _openCode.sendMessage(prompt, systemContext: systemContext);
@@ -529,6 +532,8 @@ class ChatProvider extends ChangeNotifier {
     if (_currentModel.startsWith('opencode/') && _openCode.isConnected) return true;
     return false;
   }
+
+  LearningCache get learningCache => _learningCache;
 
   String getSavedApiKey(String providerName) => _storage.getApiKeys()[providerName] ?? '';
 
@@ -816,7 +821,7 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
       final confidence = (decoded['confidence'] as num?)?.toDouble() ?? 0;
       final posSize = (decoded['positionSizePct'] as num?)?.toDouble() ?? 10;
 
-      if (action == null || action == 'HOLD' || confidence < 0.35) return null;
+      if (action == null || action == 'HOLD' || confidence < _learningCache.minConfidence) return null;
 
       return {
         'action': action,
@@ -964,6 +969,10 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
       buf.writeln('## Leçons apprises des trades précédents');
       buf.writeln(_journal.evolvedMemory);
     }
+
+    // Inject learning cache (adaptive patterns and thresholds)
+    buf.writeln('');
+    buf.writeln(_learningCache.getLearningSummary());
 
     return buf.toString();
   }
@@ -1191,6 +1200,16 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
     );
     if (closed != null) {
       _persistJournal();
+      // Record in learning cache for adaptive behavior
+      _learningCache.recordTrade(
+        symbol: symbol,
+        action: closed.side ?? '',
+        signalType: closed.signalType ?? 'AI_DECISION',
+        regime: closed.marketRegime ?? 'UNKNOWN',
+        pnlPct: closed.pnlPct ?? 0,
+        confidence: closed.signalConfidence ?? 0.5,
+        reason: closed.reason,
+      );
       // Trigger async LLM post-trade analysis
       _analyzeTradeWithLLM(closed);
     }

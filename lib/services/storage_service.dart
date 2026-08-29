@@ -284,6 +284,9 @@ class StorageService {
   String? getStrategyPerformance() => _store['noah_strategy_perf'];
   void setStrategyPerformance(String v) { _store['noah_strategy_perf'] = v; _persist(); }
 
+  String getLearningCache() => _store['noah_learning_cache'] ?? '';
+  void setLearningCache(String v) { _store['noah_learning_cache'] = v; _persist(); }
+
   // ═══════════════════════════════════════════════════════
   //  SETTINGS — AI Config
   // ═══════════════════════════════════════════════════════

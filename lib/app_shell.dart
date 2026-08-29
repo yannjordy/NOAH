@@ -248,7 +248,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     _authenticateBiometric();
   }
 
-  void _runAgentCycle() {
+  Future<void> _runAgentCycle() async {
     if (!_chat.tradingEnabled) return;
 
     final hasAiBrain = _chat.openCode.isConnected || _chat.isLlmConnected;
@@ -311,8 +311,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       }
     }
 
-    // ── BRANCH B: Rule-based agents (ALWAYS runs — with or without LLM) ──
-    // Smart prioritization: sort by volatility (most moved first)
+    // ── BRANCH B: Agents intelligents (LLM) ou regles (sans LLM) ──
     final sortedSymbols = List<String>.from(symbols);
     sortedSymbols.sort((a, b) => (pcts[a]?.abs() ?? 0).compareTo(pcts[b]?.abs() ?? 0));
     sortedSymbols.reversed;
@@ -345,29 +344,42 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       if (riskReport.details['circuitBreaker'] as bool? ?? false) continue;
       if ((riskReport.details['riskScore'] as double? ?? 0) > 0.8) continue;
 
-      final consensus = _mainAgent.analyze(sym, ctx);
-      final action = consensus.recommendation ?? 'HOLD';
-      final confidence = consensus.confidence;
+      Map<String, dynamic> signal;
 
-      final signal = {
-        'action': action,
-        'confidence': confidence,
-        'positionSizePct': 25.0,
-      };
+      if (hasAiBrain) {
+        // LLM connecte: chaque decision est intelligente
+        final aiResult = await _chat.getAiTradingDecision(sym, ctx);
+        if (aiResult == null) continue;
+        signal = aiResult;
+      } else {
+        // Sans LLM: regles automatisees
+        final consensus = _mainAgent.analyze(sym, ctx);
+        signal = {
+          'action': consensus.recommendation ?? 'HOLD',
+          'confidence': consensus.confidence,
+          'positionSizePct': 25.0,
+        };
+      }
+
       _decisionCache[sym] = signal;
+      final action = signal['action'] as String;
+      final confidence = (signal['confidence'] as num?)?.toDouble() ?? 0;
 
-      // Send to signal service for user confirmation
       if (confidence > 0.3 && action != 'HOLD') {
         final tech = ctx.technicals[sym] ?? {};
         _signalService.addSignal(
           symbol: sym,
           action: action,
           confidence: confidence,
-          positionSizePct: 25.0,
-          reason: consensus.summary,
+          positionSizePct: (signal['positionSizePct'] as num?)?.toDouble() ?? 25.0,
+          reason: signal['reason'] as String? ?? '',
           technicals: tech,
-          agentReport: {'score': consensus.confidence, 'summary': consensus.summary},
+          agentReport: {'score': confidence, 'summary': signal['reason'] ?? ''},
         );
+        // Auto-execute si confiance elevee
+        if (confidence > 0.6) {
+          _executeSignals(sym, signal);
+        }
       }
     }
 
@@ -436,7 +448,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
   void _executeSignals(String sym, Map<String, dynamic> result) {
     final action = result['action'] as String;
-    final positionSizePct = (result['positionSizePct'] as double?) ?? 15.0;
+    final basePositionSize = (result['positionSizePct'] as double?) ?? 15.0;
+    final positionSizePct = basePositionSize * _chat.learningCache.positionSizeMultiplier;
 
     if (!_chat.tradingEnabled) return;
 
