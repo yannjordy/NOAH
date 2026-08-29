@@ -485,6 +485,7 @@ class ChatProvider extends ChangeNotifier {
 
   void _restoreLlmConfig() {
     final keys = _storage.getApiKeys();
+    bool llmConnected = false;
     // Find first available configured provider
     for (final entry in _connectedModels.entries) {
       final providerName = entry.key;
@@ -495,8 +496,15 @@ class ChatProvider extends ChangeNotifier {
         final baseUrl = providerBaseUrls[providerName]!;
         _llm.updateConfig(baseUrl: baseUrl, apiKey: apiKey, model: model);
         _currentModel = model;
+        llmConnected = true;
         break;
       }
+    }
+    // Auto-enable trading if LLM is connected and trading was never toggled
+    if (llmConnected && !_tradingEnabled) {
+      _tradingEnabled = true;
+      _aiRunning = true;
+      _lastTradingAction = 'Trading IA auto-active';
     }
   }
 
@@ -921,15 +929,17 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
     buf.writeln('');
 
     buf.writeln('## Ton rôle');
-    buf.writeln('Tu es NOAH, le coordinateur de l\'équipe. Farida, Henri, Alexendra, Dylan, Emmilienne, Junior, Jordy, Régime, Chaîne, Liquidité et Attribution travaillent pour toi.');
-    buf.writeln('Cite leurs noms quand tu te réfères à leurs analyses (Farida dit que..., Henri recommande..., Emmilienne a trouvé..., Junior a backtesté...).');
-    buf.writeln('Ne dis pas "l\'agent" ou "mon agent" — dis directement leur prénom.');
-    buf.writeln('Synthétise les informations, donne ton avis, et utilise les actions [ACTION:...] si nécessaire.');
-    buf.writeln('N\'exécute JAMAIS un trade si Henri a activé le circuit breaker ou si son score de risque est > 0.7.');
+    buf.writeln('Tu es NOAH, coordinateur. Farida, Henri, Alexendra, Dylan, Emmilienne, Junior, Jordy, Régime, Chaîne, Liquidité et Attribution travaillent pour toi.');
+    buf.writeln('Règles:');
+    buf.writeln('- Réponds en 1-3 lignes MAX. Pas de paragraphes longs.');
+    buf.writeln('- Cite les prénoms (Farida dit que..., Henri recommande...).');
+    buf.writeln('- Sois direct, actionnable, sans blabla.');
+    buf.writeln('- Utilise [ACTION:...] si nécessaire.');
+    buf.writeln('- JAMAIS de trade si Henri a activé le circuit breaker ou risque > 0.7.');
     buf.writeln('');
     buf.writeln(_storage.getDemoMode()
-        ? '⚠️ Mode DÉMO : les montants sont fictifs. Tu peux trader sans risque, mais reste professionnel.'
-        : '🔴 Mode RÉEL : l\'argent est réel. Redouble de prudence, vérifie tout deux fois, et mentionne "en réel" dans tes conseils.');
+        ? '⚠️ Mode DÉMO.'
+        : '🔴 Mode RÉEL — double vérification.');
 
     buf.writeln('');
     buf.writeln('## Mémoire des Techniques de Trading');

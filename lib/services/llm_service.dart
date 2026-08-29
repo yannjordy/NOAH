@@ -115,9 +115,7 @@ class LlmService {
         else
           {
             'role': 'system',
-            'content': 'Tu es NOAH, un assistant IA spécialisé en trading et analyse financière. '
-                'Tu aides les utilisateurs à comprendre les marchés crypto, les risques, et les stratégies. '
-                'Réponds en français, sois concis et professionnel.'
+            'content': 'Tu es NOAH, assistant trading IA. Réponds en 1-3 lignes max. Sois bref et direct. Français.'
           },
         {'role': 'user', 'content': userContent.length == 1 ? text : userContent},
       ];
