@@ -203,4 +203,79 @@ class AlexBrainService {
     }
     return '';
   }
+
+  /// Envoie une demande de decision de trading au cerveau d'Alex
+  /// Retourne une Map avec action, confidence, reason, positionSizePct
+  Future<Map<String, dynamic>?> getTradingDecision({
+    required String symbol,
+    required double currentPrice,
+    required Map<String, dynamic> technicalData,
+    required String marketContext,
+  }) async {
+    if (!_connected) return null;
+
+    final prompt = '''Tu es le cerveau de trading de NOAH. Analyse et donne UNE decision precise.
+
+SYMBOL: $symbol
+PRIX ACTUEL: \$$currentPrice
+DONNEES TECHNIQUES: $technicalData
+CONTEXTE MARCHE: $marketContext
+
+Reponds UNIQUEMENT avec un JSON valide:
+{"action": "BUY"|"SELL"|"HOLD", "confidence": 0.0-1.0, "reason": "explication courte", "positionSizePct": 5-25, "sl_pct": 3, "tp_pct": 6}
+
+Regles:
+- BUY si confiance > 0.6
+- SELL si positions ouvertes et signal de sortie
+- HOLD si pas d'opportunite claire
+- positionSizePct: taille en % du portefeuille
+- SL: 3% par defaut, TP: 6% (ratio 1:2)''';
+
+    try {
+      final response = await chatWithAlex(prompt);
+      if (response.isEmpty) return null;
+
+      // Extraire le JSON de la reponse
+      final jsonMatch = RegExp(r'\{[^}]+\}').firstMatch(response);
+      if (jsonMatch == null) return null;
+
+      final decision = Map<String, dynamic>.from(
+        // Use jsonDecode on the matched string
+        await _parseJson(jsonMatch.group(0)!) ?? {},
+      );
+
+      if (decision.containsKey('action')) {
+        return decision;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _parseJson(String text) async {
+    try {
+      final decoded = jsonDecode(text);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } catch (_) {}
+    return null;
+  }
+
+  /// Recupere un resume de marche enrichi par Alex (recherche web + memoire)
+  Future<String> getEnrichedMarketContext(String symbol) async {
+    if (!_connected) return '';
+
+    final buffer = StringBuffer();
+
+    // Recherche web via Alex
+    final news = await searchMarketNews('$symbol tendance prix');
+    if (news.isNotEmpty) {
+      buffer.writeln('Actualites: ${news.substring(0, news.length.clamp(0, 500))}');
+    }
+
+    // Faits utilisateur pertinents
+    if (_userFacts.isNotEmpty) {
+      buffer.writeln('Profil: ${_userFacts.entries.take(3).map((e) => '${e.key}=${e.value}').join(', ')}');
+    }
+
+    return buffer.toString();
+  }
 }

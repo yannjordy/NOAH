@@ -272,7 +272,25 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             return '$s:\$${(prices[s] ?? 0).toStringAsFixed(2)} ${(pcts[s] ?? 0).toStringAsFixed(2)}%';
           }).join(', ')}. Top 2 opportunités. JSON: {"picks":["S1","S2"]}';
 
-          _chat.scanMarkets(scanPrompt).then((picks) {
+          // Utiliser Alex Brain pour le scan si disponible
+          Future<List<String>?> scanFn;
+          if (_chat.alexBrain.isConnected) {
+            scanFn = _chat.alexBrain.getTradingDecision(
+              symbol: 'MARKET_SCAN',
+              currentPrice: 0,
+              technicalData: {'candidates': candidates, 'prices': prices, 'pcts': pcts},
+              marketContext: 'Scan global du marche crypto. Identifie les 2 meilleures opportunites.',
+            ).then((decision) {
+              if (decision != null && decision['picks'] != null) {
+                return List<String>.from(decision['picks']);
+              }
+              return null;
+            });
+          } else {
+            scanFn = _chat.scanMarkets(scanPrompt);
+          }
+
+          scanFn.then((picks) {
             _lastTradeTime['__scan__'] = DateTime.now();
             if (picks == null || !mounted) return;
             for (final sym in picks.take(2)) {
@@ -349,7 +367,29 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
       Map<String, dynamic> signal;
 
-      if (hasAiBrain) {
+      if (_chat.alexBrain.isConnected) {
+        // Alex Brain connecte: decisions via le cerveau d'Alex
+        final alexDecision = await _chat.alexBrain.getTradingDecision(
+          symbol: sym,
+          currentPrice: currentPrice,
+          technicalData: ctx.technicals[sym] ?? {},
+          marketContext: 'Prix: $currentPrice, Position: ${ctx.positions.where((p) => p.symbol == sym).map((p) => '${p.qty} @ ${p.entryPrice}').join(", ")}',
+        );
+        if (alexDecision != null) {
+          signal = alexDecision;
+        } else if (hasAiBrain) {
+          final aiResult = await _chat.getAiTradingDecision(sym, ctx);
+          if (aiResult == null) continue;
+          signal = aiResult;
+        } else {
+          final consensus = _mainAgent.analyze(sym, ctx);
+          signal = {
+            'action': consensus.recommendation ?? 'HOLD',
+            'confidence': consensus.confidence,
+            'positionSizePct': 25.0,
+          };
+        }
+      } else if (hasAiBrain) {
         // LLM connecte: chaque decision est intelligente
         final aiResult = await _chat.getAiTradingDecision(sym, ctx);
         if (aiResult == null) continue;
