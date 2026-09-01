@@ -316,8 +316,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
     // ── BRANCH B: Agents intelligents (LLM) ou regles (sans LLM) ──
     final sortedSymbols = List<String>.from(symbols);
-    sortedSymbols.sort((a, b) => (pcts[a]?.abs() ?? 0).compareTo(pcts[b]?.abs() ?? 0));
-    sortedSymbols.reversed;
+    sortedSymbols.sort((a, b) => (pcts[b]?.abs() ?? 0).compareTo(pcts[a]?.abs() ?? 0));
 
     for (final sym in sortedSymbols) {
       final lastTrade = _lastTradeTime[sym];
@@ -786,7 +785,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       (Icons.candlestick_chart_rounded, 'Trade'),
       (Icons.newspaper_rounded, 'News'),
       (Icons.account_balance_wallet_rounded, 'Portfolio'),
-      (Icons.hub_rounded, 'Connections'),
+      (Icons.settings_rounded, 'Settings'),
     ];
     final navMapping = [0, 1, 2, 7, 4, 6];
     final navIndex = _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : _currentTab == 6 ? 5 : (_prevNavIndex);
