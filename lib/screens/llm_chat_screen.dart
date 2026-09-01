@@ -291,51 +291,54 @@ class _LLMChatScreenState extends State<LLMChatScreen> with SingleTickerProvider
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: bg2,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)),
-                      ),
-                      child: TextField(
-                        controller: _msgCtrl,
-                        style: TextStyle(fontSize: 14, color: t0),
-                        maxLines: null,
-                        decoration: InputDecoration(
-                          hintText: 'Parle à NOAH...',
-                          hintStyle: TextStyle(color: t2),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: bg2,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)),
                         ),
-                        onSubmitted: (_) => _sendMessage(),
+                        child: TextField(
+                          controller: _msgCtrl,
+                          style: TextStyle(fontSize: 14, color: t0),
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Parle à NOAH...',
+                            hintStyle: TextStyle(color: t2),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   GestureDetector(
                     onTap: _isTyping ? null : _sendMessage,
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: _isTyping
                               ? [Colors.grey, Colors.grey]
                               : [accent, accent.withValues(alpha: 0.8)],
                         ),
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Center(
                         child: _isTyping
                             ? const SizedBox(
-                                width: 18,
-                                height: 18,
+                                width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.send, size: 18, color: Colors.white),
+                            : const Icon(Icons.send, size: 20, color: Colors.white),
                       ),
                     ),
                   ),
