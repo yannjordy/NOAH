@@ -20,16 +20,18 @@ void main() async {
     return true;
   };
 
-    await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+    if (!Platform.isLinux) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
 
-  if (Platform.isAndroid) {
-    try {
-      BackgroundService.start();
-    } catch (_) {}
-  }
+    if (Platform.isAndroid) {
+      try {
+        BackgroundService.start();
+      } catch (_) {}
+    }
 
   try {
     final storage = StorageService();

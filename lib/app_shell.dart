@@ -663,103 +663,248 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             return Scaffold(
               backgroundColor: _settings.isDark ? NoahColors.dkBg0 : NoahColors.bg0,
               body: NotificationOverlay(
-                child: Center(
-                  child: SizedBox(
-                    width: 430,
-                    child: Stack(
-                    children: [
-                      // Main content
-                      Column(
-                        children: [
-                          _buildTopBar(),
-                          TickerStrip(
-                            currentSymbol: _portfolio.currentSymbol,
-                            onSelect: (s) => _portfolio.setSymbol(s),
-                            isDark: _settings.isDark,
-                          ),
-                          NotificationBar(
-                            tradingEnabled: _chat.tradingEnabled,
-                            backendOnline: true,
-                            showReconnected: false,
-                            isDark: _settings.isDark,
-                          ),
-                          Expanded(child: RepaintBoundary(child: _buildScreen())),
-                          NoahBottomNav(
-                            currentIndex: _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : (_prevNavIndex),
-                            pendingCount: _signalService.currentPending.length,
-                            onTap: (i) {
-                              const mapping = [0, 1, 2, 7, 4];
-                              _prevNavIndex = i;
-                              _goTab(mapping[i]);
-                            },
-                          ),
-                        ],
-                      ),
-                      // Hamburger overlay
-                      if (_overlayCtrl.value > 0)
-                        Positioned.fill(
-                          child: GestureDetector(
-                            onTap: _closeHamburger,
-                            child: IgnorePointer(
-                              ignoring: !_hamburgerOpen && !_accountOpen,
-                              child: AnimatedBuilder(
-                                animation: _overlayCtrl,
-                                builder: (context, _) {
-                                  return Container(
-                                    color: Colors.black.withValues(alpha: 0.5 * _overlayAnim.value),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Hamburger panel
-                      HamburgerPanel(
-                        isOpen: _hamburgerOpen,
-                        animValue: _hamburgerAnim.value,
-                        activeTab: _currentTab,
-                        onClose: _closeHamburger,
-                        onGoTab: _goTab,
-                        chatProvider: _chat,
-                        authProvider: _auth,
-                      ),
-                      // Account sheet
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: AccountSheet(
-                          isOpen: _accountOpen,
-                          animValue: _overlayAnim.value,
-                          auth: _auth,
-                          settings: _settings,
-                          onClose: _closeAccount,
-                        ),
-                      ),
-                      // Login overlay
-                      if (_loginOpen)
-                        Positioned.fill(
-                          child: GestureDetector(
-                            onTap: _closeLogin,
-                            child: Container(color: Colors.black.withValues(alpha: 0.45)),
-                          ),
-                        ),
-                      if (_loginOpen)
-                        Center(
-                          child: LoginModal(
-                            auth: _auth,
-                            supabase: widget.supabase,
-                            onClose: _closeLogin,
-                          ),
-                        ),
-                    ],
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isDesktop = constraints.maxWidth > 768;
+                    if (isDesktop) {
+                      return _buildDesktopLayout(constraints);
+                    }
+                    return _buildMobileLayout();
+                  },
                 ),
               ),
-            ),
-          );
+            );
           },
         ),
       ),
     ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            _buildTopBar(),
+            TickerStrip(
+              currentSymbol: _portfolio.currentSymbol,
+              onSelect: (s) => _portfolio.setSymbol(s),
+              isDark: _settings.isDark,
+            ),
+            NotificationBar(
+              tradingEnabled: _chat.tradingEnabled,
+              backendOnline: true,
+              showReconnected: false,
+              isDark: _settings.isDark,
+            ),
+            Expanded(child: RepaintBoundary(child: _buildScreen())),
+            NoahBottomNav(
+              currentIndex: _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : (_prevNavIndex),
+              pendingCount: _signalService.currentPending.length,
+              onTap: (i) {
+                const mapping = [0, 1, 2, 7, 4];
+                _prevNavIndex = i;
+                _goTab(mapping[i]);
+              },
+            ),
+          ],
+        ),
+        if (_overlayCtrl.value > 0)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeHamburger,
+              child: IgnorePointer(
+                ignoring: !_hamburgerOpen && !_accountOpen,
+                child: AnimatedBuilder(
+                  animation: _overlayCtrl,
+                  builder: (context, _) {
+                    return Container(color: Colors.black.withValues(alpha: 0.5 * _overlayAnim.value));
+                  },
+                ),
+              ),
+            ),
+          ),
+        HamburgerPanel(
+          isOpen: _hamburgerOpen,
+          animValue: _hamburgerAnim.value,
+          activeTab: _currentTab,
+          onClose: _closeHamburger,
+          onGoTab: _goTab,
+          chatProvider: _chat,
+          authProvider: _auth,
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: AccountSheet(
+            isOpen: _accountOpen,
+            animValue: _overlayAnim.value,
+            auth: _auth,
+            settings: _settings,
+            onClose: _closeAccount,
+          ),
+        ),
+        if (_loginOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeLogin,
+              child: Container(color: Colors.black.withValues(alpha: 0.45)),
+            ),
+          ),
+        if (_loginOpen)
+          Center(
+            child: LoginModal(
+              auth: _auth,
+              supabase: widget.supabase,
+              onClose: _closeLogin,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopLayout(BoxConstraints constraints) {
+    final isDark = _settings.isDark;
+    final accent = isDark ? const Color(0xFFC2A878) : const Color(0xFFB08D57);
+    final bg2 = isDark ? const Color(0xFF141414) : const Color(0xFFF0EDE5);
+    final t2 = isDark ? const Color(0xFF6C6C6C) : const Color(0xFF9C9C9C);
+    final border = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06);
+
+    final navItems = [
+      (Icons.dashboard_rounded, 'Core'),
+      (Icons.chat_bubble_rounded, 'Chat'),
+      (Icons.candlestick_chart_rounded, 'Trade'),
+      (Icons.newspaper_rounded, 'News'),
+      (Icons.account_balance_wallet_rounded, 'Portfolio'),
+      (Icons.hub_rounded, 'Connections'),
+    ];
+    final navMapping = [0, 1, 2, 7, 4, 6];
+    final navIndex = _currentTab <= 2 ? _currentTab : _currentTab == 7 ? 3 : _currentTab == 4 ? 4 : _currentTab == 6 ? 5 : (_prevNavIndex);
+
+    return Row(
+      children: [
+        Container(
+          width: 72,
+          decoration: BoxDecoration(
+            color: bg2,
+            border: Border(right: BorderSide(color: border, width: 0.5)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [accent, accent.withValues(alpha: 0.7)]),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
+                ),
+                child: const Center(child: Text('N', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white))),
+              ),
+              const SizedBox(height: 24),
+              ...List.generate(navItems.length, (i) {
+                final active = i == navIndex;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: GestureDetector(
+                    onTap: () {
+                      _prevNavIndex = i;
+                      _goTab(navMapping[i]);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 56,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: active ? accent.withValues(alpha: 0.12) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(navItems[i].$1, size: 20, color: active ? accent : t2),
+                          const SizedBox(height: 4),
+                          Text(navItems[i].$2, style: TextStyle(fontSize: 9, fontWeight: active ? FontWeight.w700 : FontWeight.w500, color: active ? accent : t2)),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  _buildTopBar(),
+                  TickerStrip(
+                    currentSymbol: _portfolio.currentSymbol,
+                    onSelect: (s) => _portfolio.setSymbol(s),
+                    isDark: _settings.isDark,
+                  ),
+                  NotificationBar(
+                    tradingEnabled: _chat.tradingEnabled,
+                    backendOnline: true,
+                    showReconnected: false,
+                    isDark: _settings.isDark,
+                  ),
+                  Expanded(child: RepaintBoundary(child: _buildScreen())),
+                ],
+              ),
+              if (_overlayCtrl.value > 0)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _closeHamburger,
+                    child: IgnorePointer(
+                      ignoring: !_hamburgerOpen && !_accountOpen,
+                      child: AnimatedBuilder(
+                        animation: _overlayCtrl,
+                        builder: (context, _) => Container(color: Colors.black.withValues(alpha: 0.5 * _overlayAnim.value)),
+                      ),
+                    ),
+                  ),
+                ),
+              HamburgerPanel(
+                isOpen: _hamburgerOpen,
+                animValue: _hamburgerAnim.value,
+                activeTab: _currentTab,
+                onClose: _closeHamburger,
+                onGoTab: _goTab,
+                chatProvider: _chat,
+                authProvider: _auth,
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: AccountSheet(
+                  isOpen: _accountOpen,
+                  animValue: _overlayAnim.value,
+                  auth: _auth,
+                  settings: _settings,
+                  onClose: _closeAccount,
+                ),
+              ),
+              if (_loginOpen)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _closeLogin,
+                    child: Container(color: Colors.black.withValues(alpha: 0.45)),
+                  ),
+                ),
+              if (_loginOpen)
+                Center(
+                  child: LoginModal(
+                    auth: _auth,
+                    supabase: widget.supabase,
+                    onClose: _closeLogin,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
