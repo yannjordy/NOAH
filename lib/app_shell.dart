@@ -429,6 +429,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         _lastSentiment = sentiment;
       }
     } catch (_) {}
+    // Enrichir avec la recherche web d'Alex si disponible
+    if (_chat.alexBrain.isConnected) {
+      try {
+        final alexNews = await _chat.alexBrain.searchMarketNews('bitcoin crypto tendance');
+        if (alexNews.isNotEmpty) {
+          _lastSentiment['alex_context'] = alexNews;
+        }
+      } catch (_) {}
+    }
   }
 
   double _tradingBudget() {
@@ -697,6 +706,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
               backendOnline: true,
               showReconnected: false,
               isDark: _settings.isDark,
+              alexConnected: _chat.alexBrain.isConnected,
             ),
             Expanded(child: RepaintBoundary(child: _buildScreen())),
             NoahBottomNav(
@@ -850,6 +860,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
                     backendOnline: true,
                     showReconnected: false,
                     isDark: _settings.isDark,
+                    alexConnected: _chat.alexBrain.isConnected,
                   ),
                   Expanded(child: RepaintBoundary(child: _buildScreen())),
                 ],

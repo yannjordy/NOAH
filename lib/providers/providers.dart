@@ -17,6 +17,7 @@ import '../services/deerflow_service.dart';
 import '../services/trading_api_service.dart';
 import '../services/trade_journal_service.dart';
 import '../services/learning_cache.dart';
+import '../services/alex_brain_service.dart';
 import '../services/ai_tools.dart';
 import '../services/ai_router_service.dart';
 import '../agents/agents.dart' hide fmt;
@@ -381,6 +382,7 @@ class ChatProvider extends ChangeNotifier {
   final TradingApiService _tradingApi;
   final LlmService _llm;
   final OpenCodeService _openCode;
+  final AlexBrainService _alexBrain = AlexBrainService();
   final TradeJournalService _journal = TradeJournalService();
   late LearningCache _learningCache;
   final AIRouterService _aiRouter = AIRouterService();
@@ -509,6 +511,10 @@ class ChatProvider extends ChangeNotifier {
       _aiRunning = true;
       _lastTradingAction = 'Trading IA auto-active';
     }
+    // Auto-connect to Alex Brain if available
+    _alexBrain.checkConnection().then((ok) {
+      if (ok) notifyListeners();
+    });
   }
 
   List<ChatMessage> get messages => _messages;
@@ -534,6 +540,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   LearningCache get learningCache => _learningCache;
+  AlexBrainService get alexBrain => _alexBrain;
 
   String getSavedApiKey(String providerName) => _storage.getApiKeys()[providerName] ?? '';
 
@@ -973,6 +980,18 @@ JSON: {"action":"BUY/SELL/HOLD","confidence":0.0-1.0,"positionSizePct":5-30,"rea
     // Inject learning cache (adaptive patterns and thresholds)
     buf.writeln('');
     buf.writeln(_learningCache.getLearningSummary());
+
+    // Inject Alex Brain context (memory, user profile, tools)
+    if (_alexBrain.isConnected) {
+      buf.writeln('');
+      buf.writeln('## Alex Desktop - Assistant Personnel Connecte');
+      buf.writeln('L\'assistant Alex est disponible sur ce poste.');
+      buf.writeln('Tu peux utiliser ses outils: recherche web, meteo, scan securite, info systeme.');
+      buf.writeln('Profil utilisateur: ${_alexBrain.userName}');
+      if (_alexBrain.userFacts.isNotEmpty) {
+        buf.writeln('Faits connus: ${_alexBrain.userFacts.entries.map((e) => '${e.key}=${e.value}').join(', ')}');
+      }
+    }
 
     return buf.toString();
   }

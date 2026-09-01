@@ -7,6 +7,7 @@ class NotificationBar extends StatefulWidget {
   final bool backendOnline;
   final bool showReconnected;
   final bool isDark;
+  final bool alexConnected;
 
   const NotificationBar({
     super.key,
@@ -14,6 +15,7 @@ class NotificationBar extends StatefulWidget {
     required this.backendOnline,
     required this.showReconnected,
     required this.isDark,
+    this.alexConnected = false,
   });
 
   @override
@@ -150,6 +152,24 @@ class _NotificationBarState extends State<NotificationBar>
                   if (state == NotificationState.tradingActive) ...[
                     const SizedBox(width: 6),
                     _dot(textColor, opacity),
+                  ],
+                  if (widget.alexConnected) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC2A878).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.smart_toy, size: 9, color: Color(0xFFC2A878)),
+                          SizedBox(width: 3),
+                          Text('ALEX', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Color(0xFFC2A878), letterSpacing: 0.5)),
+                        ],
+                      ),
+                    ),
                   ],
                 ],
               ),
